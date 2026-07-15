@@ -102,12 +102,17 @@ class SimulatorController extends ChangeNotifier {
     return accepted;
   }
 
-  Duration get processingDelay => switch (speed) {
-        SimulatorSpeed.instant => Duration.zero,
-        SimulatorSpeed.fast => const Duration(milliseconds: 250),
-        SimulatorSpeed.realistic => const Duration(milliseconds: 650),
-        SimulatorSpeed.slowTraining => const Duration(milliseconds: 1100),
-      };
+  Duration get processingDelay {
+    final speedDelay = switch (speed) {
+      SimulatorSpeed.instant => Duration.zero,
+      SimulatorSpeed.fast => const Duration(milliseconds: 250),
+      SimulatorSpeed.realistic => const Duration(milliseconds: 650),
+      SimulatorSpeed.slowTraining => const Duration(milliseconds: 1100),
+    };
+    return selectedScenario.delay > speedDelay
+        ? selectedScenario.delay
+        : speedDelay;
+  }
 
   Future<void> executePaymentOnce() async {
     if (_executed || pendingRequest == null) return;
@@ -161,6 +166,12 @@ class SimulatorController extends ChangeNotifier {
 
   void setTippingEnabled(bool value) {
     engine.config = engine.config.copyWith(tippingEnabled: value);
+    notifyListeners();
+  }
+
+  void setTipLimits({double? amount, double? percentage}) {
+    engine.config = engine.config
+        .copyWith(maximumTipAmount: amount, maximumTipPercentage: percentage);
     notifyListeners();
   }
 

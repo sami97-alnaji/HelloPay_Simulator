@@ -1104,17 +1104,41 @@ class _ScenarioStudioScreenState extends ConsumerState<ScenarioStudioScreen> {
 
   void validateJson() {
     try {
-      jsonDecode(json.text);
+      if (jsonDecode(json.text) is! Map) {
+        throw const FormatException('JSON response must be an object');
+      }
       setState(() => jsonError = null);
     } catch (e) {
       setState(() => jsonError = 'Invalid JSON syntax');
     }
   }
 
+  ScenarioPreset configuredDraft() {
+    if (draft.scenario != SimulatorScenario.custom) return draft;
+    return draft.copyWith(
+        customResponse:
+            Map<String, dynamic>.from(jsonDecode(json.text) as Map));
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = ref.watch(simulatorControllerProvider);
     final wide = MediaQuery.sizeOf(context).width >= 780;
+    Widget statusField(String label, TerminalStatus current,
+            ValueChanged<TerminalStatus> onChanged) =>
+        Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: DropdownButtonFormField<TerminalStatus>(
+                key: ValueKey('$label-${current.wire}'),
+                initialValue: current,
+                isExpanded: true,
+                decoration: InputDecoration(
+                    labelText: label, border: const OutlineInputBorder()),
+                items: TerminalStatus.values
+                    .map((status) => DropdownMenuItem(
+                        value: status, child: Text(status.wire)))
+                    .toList(),
+                onChanged: (value) => onChanged(value!)));
     final editor = TerminalPanel(
         child:
             Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -1127,7 +1151,12 @@ class _ScenarioStudioScreenState extends ConsumerState<ScenarioStudioScreen> {
           items: ScenarioPresets.all
               .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
               .toList(),
-          onChanged: (v) => setState(() => draft = v!)),
+          onChanged: (v) => setState(() {
+                draft = v!;
+                json.text = const JsonEncoder.withIndent(' ')
+                    .convert(draft.customResponse ?? {'status': 'APPROVED'});
+                jsonError = null;
+              })),
       const SizedBox(height: 12),
       DropdownButtonFormField(
           key: ValueKey(speed),
@@ -1153,19 +1182,76 @@ class _ScenarioStudioScreenState extends ConsumerState<ScenarioStudioScreen> {
           onChanged: (v) =>
               ref.read(simulatorControllerProvider).selectCard(v!)),
       const SizedBox(height: 16),
-      _ReadOnlyControl(
-          'Status before transaction', draft.terminalStatusBefore.wire),
-      _ReadOnlyControl(
-          'Status during transaction', draft.terminalStatusDuring.wire),
-      _ReadOnlyControl(
-          'Status after transaction', draft.terminalStatusAfter.wire),
-      _ReadOnlyControl('PIN behavior', draft.pinBehavior.wire),
-      _ReadOnlyControl(
-          'Signature required', draft.requireSignature ? 'Yes' : 'No'),
-      _ReadOnlyControl('Processor', draft.processor),
-      _ReadOnlyControl('Error code', draft.responseErrorCode ?? 'None'),
-      _ReadOnlyControl('Error message', draft.responseErrorMessage ?? 'None'),
-      _ReadOnlyControl('Receipt enabled', draft.receiptEnabled ? 'Yes' : 'No'),
+      Text('Scenario delay: ${draft.delay.inMilliseconds} ms',
+          style: const TextStyle(fontWeight: FontWeight.w700)),
+      Slider(
+          value: draft.delay.inMilliseconds.clamp(0, 3000).toDouble(),
+          max: 3000,
+          divisions: 12,
+          label: '${draft.delay.inMilliseconds} ms',
+          onChanged: (value) => setState(() => draft =
+              draft.copyWith(delay: Duration(milliseconds: value.round())))),
+      statusField(
+          'Status before transaction',
+          draft.terminalStatusBefore,
+          (value) => setState(
+              () => draft = draft.copyWith(terminalStatusBefore: value))),
+      statusField(
+          'Status during transaction',
+          draft.terminalStatusDuring,
+          (value) => setState(
+              () => draft = draft.copyWith(terminalStatusDuring: value))),
+      statusField(
+          'Status after transaction',
+          draft.terminalStatusAfter,
+          (value) => setState(
+              () => draft = draft.copyWith(terminalStatusAfter: value))),
+      DropdownButtonFormField<PinBehavior>(
+          key: ValueKey('pin-${draft.pinBehavior.wire}'),
+          initialValue: draft.pinBehavior,
+          isExpanded: true,
+          decoration: const InputDecoration(
+              labelText: 'PIN behavior', border: OutlineInputBorder()),
+          items: PinBehavior.values
+              .map((behavior) =>
+                  DropdownMenuItem(value: behavior, child: Text(behavior.wire)))
+              .toList(),
+          onChanged: (value) => setState(() => draft = draft.copyWith(
+              pinBehavior: value,
+              requiresPin: value != PinBehavior.notRequired))),
+      SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          value: draft.requireSignature,
+          title: const Text('Signature required'),
+          onChanged: (value) =>
+              setState(() => draft = draft.copyWith(requireSignature: value))),
+      TextFormField(
+          initialValue: draft.processor,
+          decoration: const InputDecoration(
+              labelText: 'Processor', border: OutlineInputBorder()),
+          onChanged: (value) => draft = draft.copyWith(processor: value)),
+      const SizedBox(height: 10),
+      TextFormField(
+          initialValue: draft.responseErrorCode,
+          decoration: const InputDecoration(
+              labelText: 'Error code', border: OutlineInputBorder()),
+          onChanged: (value) => draft = draft.copyWith(
+              responseErrorCode: value,
+              clearResponseErrorCode: value.trim().isEmpty)),
+      const SizedBox(height: 10),
+      TextFormField(
+          initialValue: draft.responseErrorMessage,
+          decoration: const InputDecoration(
+              labelText: 'Error message', border: OutlineInputBorder()),
+          onChanged: (value) => draft = draft.copyWith(
+              responseErrorMessage: value,
+              clearResponseErrorMessage: value.trim().isEmpty)),
+      SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          value: draft.receiptEnabled,
+          title: const Text('Receipt enabled'),
+          onChanged: (value) =>
+              setState(() => draft = draft.copyWith(receiptEnabled: value))),
       if (draft.scenario == SimulatorScenario.custom) ...[
         const SizedBox(height: 12),
         TextField(
@@ -1212,7 +1298,7 @@ class _ScenarioStudioScreenState extends ConsumerState<ScenarioStudioScreen> {
                     ? () {
                         final ctrl = ref.read(simulatorControllerProvider);
                         ctrl.speed = speed;
-                        ctrl.selectScenario(draft);
+                        ctrl.selectScenario(configuredDraft());
                       }
                     : null))
       ]),
@@ -1224,7 +1310,7 @@ class _ScenarioStudioScreenState extends ConsumerState<ScenarioStudioScreen> {
               ? () {
                   final ctrl = ref.read(simulatorControllerProvider);
                   ctrl.speed = speed;
-                  ctrl.selectScenario(draft);
+                  ctrl.selectScenario(configuredDraft());
                   context.go('/payment');
                 }
               : null),
@@ -1254,18 +1340,6 @@ class _ScenarioStudioScreenState extends ConsumerState<ScenarioStudioScreen> {
         status: c.engine.runtimeState.status,
         child: _ResponsivePair(wide: wide, first: editor, second: preview));
   }
-}
-
-class _ReadOnlyControl extends StatelessWidget {
-  const _ReadOnlyControl(this.label, this.value);
-  final String label, value;
-  @override
-  Widget build(BuildContext context) => Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: InputDecorator(
-          decoration: InputDecoration(
-              labelText: label, border: const OutlineInputBorder()),
-          child: Text(value)));
 }
 
 class _StateTransition extends StatelessWidget {
@@ -1493,9 +1567,25 @@ class SettingsScreen extends ConsumerWidget {
                   c.setTippingEnabled(v);
                 },
                 title: const Text('Tipping enabled')),
-            _DataRow('Maximum tip amount', money(config.maximumTipAmount)),
-            _DataRow('Maximum tip percentage',
-                '${config.maximumTipPercentage.toStringAsFixed(0)}%')
+            ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Maximum tip amount'),
+                trailing: Text(money(config.maximumTipAmount)),
+                onTap: () => _editNumber(
+                    context,
+                    'Maximum tip amount',
+                    config.maximumTipAmount,
+                    (value) => c.setTipLimits(amount: value))),
+            ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Maximum tip percentage'),
+                trailing:
+                    Text('${config.maximumTipPercentage.toStringAsFixed(0)}%'),
+                onTap: () => _editNumber(
+                    context,
+                    'Maximum tip percentage',
+                    config.maximumTipPercentage,
+                    (value) => c.setTipLimits(percentage: value)))
           ]),
           _SettingsSection('Pairing / session', Icons.link, [
             _DataRow(
@@ -1607,6 +1697,37 @@ Future<void> _confirm(BuildContext context, String title, String message,
               ])) ??
       false;
   if (ok) action();
+}
+
+Future<void> _editNumber(BuildContext context, String title, double current,
+    ValueChanged<double> onSave) async {
+  final field = TextEditingController(text: current.toStringAsFixed(0));
+  final value = await showDialog<double>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+              title: Text(title),
+              content: TextField(
+                  controller: field,
+                  autofocus: true,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(
+                      labelText: 'Value', border: OutlineInputBorder())),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: const Text('Cancel')),
+                FilledButton(
+                    onPressed: () {
+                      final parsed = double.tryParse(field.text);
+                      if (parsed != null && parsed >= 0) {
+                        Navigator.pop(dialogContext, parsed);
+                      }
+                    },
+                    child: const Text('Save'))
+              ]));
+  field.dispose();
+  if (value != null) onSave(value);
 }
 
 class DeveloperDocsScreen extends StatefulWidget {

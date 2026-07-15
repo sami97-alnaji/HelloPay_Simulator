@@ -620,23 +620,49 @@ class ScenarioPreset extends ImmutableModel {
   final PinBehavior pinBehavior;
   final String? responseErrorCode, responseErrorMessage;
   final Json? customResponse;
-  ScenarioPreset copyWith({SimulatorScenario? scenario}) => ScenarioPreset(
-      id: id,
-      name: name,
-      description: description,
-      scenario: scenario ?? this.scenario,
-      delay: delay,
-      terminalStatusBefore: terminalStatusBefore,
-      terminalStatusDuring: terminalStatusDuring,
-      terminalStatusAfter: terminalStatusAfter,
-      requiresPin: requiresPin,
-      pinBehavior: pinBehavior,
-      requireSignature: requireSignature,
-      processor: processor,
-      responseErrorCode: responseErrorCode,
-      responseErrorMessage: responseErrorMessage,
-      receiptEnabled: receiptEnabled,
-      customResponse: customResponse);
+  ScenarioPreset copyWith({
+    SimulatorScenario? scenario,
+    Duration? delay,
+    TerminalStatus? terminalStatusBefore,
+    TerminalStatus? terminalStatusDuring,
+    TerminalStatus? terminalStatusAfter,
+    bool? requiresPin,
+    PinBehavior? pinBehavior,
+    bool? requireSignature,
+    String? processor,
+    String? responseErrorCode,
+    bool clearResponseErrorCode = false,
+    String? responseErrorMessage,
+    bool clearResponseErrorMessage = false,
+    bool? receiptEnabled,
+    Json? customResponse,
+    bool clearCustomResponse = false,
+  }) =>
+      ScenarioPreset(
+          id: id,
+          name: name,
+          description: description,
+          scenario: scenario ?? this.scenario,
+          delay: delay ?? this.delay,
+          terminalStatusBefore:
+              terminalStatusBefore ?? this.terminalStatusBefore,
+          terminalStatusDuring:
+              terminalStatusDuring ?? this.terminalStatusDuring,
+          terminalStatusAfter: terminalStatusAfter ?? this.terminalStatusAfter,
+          requiresPin: requiresPin ?? this.requiresPin,
+          pinBehavior: pinBehavior ?? this.pinBehavior,
+          requireSignature: requireSignature ?? this.requireSignature,
+          processor: processor ?? this.processor,
+          responseErrorCode: clearResponseErrorCode
+              ? null
+              : responseErrorCode ?? this.responseErrorCode,
+          responseErrorMessage: clearResponseErrorMessage
+              ? null
+              : responseErrorMessage ?? this.responseErrorMessage,
+          receiptEnabled: receiptEnabled ?? this.receiptEnabled,
+          customResponse: clearCustomResponse
+              ? null
+              : customResponse ?? this.customResponse);
   @override
   Json toJson() => {
         'id': id,

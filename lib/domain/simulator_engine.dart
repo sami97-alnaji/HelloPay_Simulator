@@ -120,7 +120,13 @@ class SimulatorEngine {
     final scenario = selectedScenario.scenario == SimulatorScenario.success
         ? selectedCard.defaultScenario
         : selectedScenario.scenario;
-    if (scenario != SimulatorScenario.success) {
+    final customStatus = selectedScenario.customResponse?['status']
+        ?.toString()
+        .trim()
+        .toUpperCase();
+    final customApproved = scenario == SimulatorScenario.custom &&
+        (customStatus == 'APPROVED' || customStatus == 'SUCCESS');
+    if (scenario != SimulatorScenario.success && !customApproved) {
       final error = _scenarioError(scenario);
       runtimeState = runtimeState.copyWith(
           status: TerminalStatus.ready,

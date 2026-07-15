@@ -8,6 +8,7 @@ import 'package:hellopay_simulator/domain/models.dart';
 import 'package:hellopay_simulator/screens/terminal_screens.dart';
 import 'package:hellopay_simulator/state/simulator_controller.dart';
 import 'package:hellopay_simulator/state/simulator_providers.dart';
+import 'package:hellopay_simulator/widgets/terminal_widgets.dart';
 
 void main() {
   PaymentRequest request({double base = 1000, double? tip}) => PaymentRequest(
@@ -241,5 +242,60 @@ void main() {
     await controller.executePaymentOnce();
     await controller.executePaymentOnce();
     expect(controller.engine.transactionHistory, hasLength(1));
+  });
+
+  test('custom approved JSON executes only after valid configuration',
+      () async {
+    final controller = SimulatorController()..speed = SimulatorSpeed.instant;
+    final custom = ScenarioPresets.all.firstWhere((s) => s.id == 'custom');
+    controller.selectScenario(custom.copyWith(
+        delay: Duration.zero,
+        customResponse: const {'status': 'APPROVED', 'demo': true}));
+    controller.preparePayment(request());
+    await controller.executePaymentOnce();
+    expect(controller.resultTransaction?.isSuccessful, isTrue);
+  });
+
+  testWidgets('refund and void results use transaction-specific wording',
+      (tester) async {
+    final controller = SimulatorController();
+    final sale = controller.engine.processPayment(request()).value!;
+    final refund = controller.engine
+        .processRefund(RefundRequest(
+            requestId: 'REF-1',
+            amount: 100,
+            paymentMethod: PaymentMethod.bank,
+            userCode: 'demo',
+            originalTransactionId: sale.transactionId))
+        .value!;
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(body: TransactionResultView(transaction: refund))));
+    expect(find.text('Refund successful'), findsOneWidget);
+
+    final voidController = SimulatorController();
+    final voidSale = voidController.engine.processPayment(request()).value!;
+    final voidTransaction = voidController.engine
+        .voidLastTransaction(VoidRequest(
+            requestId: 'VOID-1', lastTransactionId: voidSale.transactionId))
+        .value!;
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: TransactionResultView(transaction: voidTransaction))));
+    expect(find.text('Void successful'), findsOneWidget);
+  });
+
+  testWidgets('receipt includes refunded amount when relevant', (tester) async {
+    final controller = SimulatorController();
+    final sale = controller.engine.processPayment(request()).value!;
+    controller.engine.processRefund(RefundRequest(
+        requestId: 'REF-2',
+        amount: 250,
+        paymentMethod: PaymentMethod.bank,
+        userCode: 'demo',
+        originalTransactionId: sale.transactionId));
+    final updatedSale = controller.engine.transactionHistory.first;
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(body: ReceiptPaper(transaction: updatedSale))));
+    expect(find.textContaining('Refunded: 250 HUF'), findsOneWidget);
   });
 }

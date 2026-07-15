@@ -513,12 +513,20 @@ class TransactionResultView extends StatelessWidget {
             ? AppColors.hpWarning
             : AppColors.hpDeclined;
     final title = approved
-        ? 'Payment approved'
+        ? switch (transaction!.type) {
+            TransactionType.refund => 'Refund successful',
+            TransactionType.voidTransaction => 'Void successful',
+            _ => 'Payment approved',
+          }
         : cancelled
             ? 'Customer cancelled'
             : timeout
                 ? 'Request timed out'
-                : 'Payment declined';
+                : switch (transaction?.type) {
+                    TransactionType.refund => 'Refund failed',
+                    TransactionType.voidTransaction => 'Void failed',
+                    _ => 'Payment declined',
+                  };
     return Semantics(
         liveRegion: true,
         label: title,
@@ -621,6 +629,8 @@ class ReceiptPaper extends StatelessWidget {
         'Tip: ${money(transaction.tipAmount)}',
         'Service: ${money(transaction.serviceAmount)}',
         'Total: ${money(transaction.totalAmount)}',
+        if (transaction.refundedAmount > 0)
+          'Refunded: ${money(transaction.refundedAmount)}',
         'Card: ${transaction.cardType} ${transaction.maskedCardNumber}',
         'Transaction ID: ${transaction.transactionId}',
         'Request ID: ${transaction.requestId}',
