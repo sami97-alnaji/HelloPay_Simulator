@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../screens/terminal_screens.dart';
+import '../screens/api_monitor_screen.dart';
 import '../theme/app_theme.dart';
 
 class HelloPaySimulatorApp extends StatefulWidget {
@@ -39,6 +40,8 @@ class _HelloPaySimulatorAppState extends State<HelloPaySimulatorApp> {
         ),
       ),
       GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
+      GoRoute(
+          path: '/api-monitor', builder: (_, __) => const ApiMonitorScreen()),
       GoRoute(
           path: '/developer-docs',
           builder: (_, __) => const DeveloperDocsScreen()),

@@ -11,10 +11,11 @@ rules.
 
 ## Current status
 
-Phase 4 is implemented: the complete visual demo flow, reusable terminal
+Phases 4 and 5 are implemented: the complete visual demo flow, reusable terminal
 components, Riverpod state, routing, responsive layouts, accessibility
 semantics, in-app developer documentation, and transaction history are
-available. The Local HTTP API server is intentionally deferred to Phase 5.
+available together with a native local HTTP API, UDP discovery, session checks,
+idempotency, concurrency protection, and a sanitized API monitor.
 
 ## Supported visual flows
 
@@ -91,5 +92,5 @@ Runtime captures are stored in [`docs/screenshots/`](docs/screenshots/):
 
 Refunds may link to an original simulator transaction ID to test remaining
 refundable balances. This is simulator-specific behavior, not a claim about a
-production HelloPay protocol. The Local HTTP API and endpoint simulation will
-be introduced in Phase 5.
+production HelloPay protocol. The local endpoint contract is documented in
+[`docs/local-api.md`](docs/local-api.md).

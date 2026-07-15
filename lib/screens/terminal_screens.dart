@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../api/api_controller.dart';
 import '../domain/demo_data.dart';
 import '../domain/enums.dart';
 import '../domain/models.dart';
@@ -99,6 +100,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.watch(simulatorControllerProvider);
+    final api = ref.watch(apiControllerProvider);
     final engine = controller.engine;
     final tx = engine.lastTransaction;
     final wide = MediaQuery.sizeOf(context).width >= 700;
@@ -108,6 +110,7 @@ class HomeScreen extends ConsumerWidget {
       _HomeAction(
           'Transaction History', Icons.receipt_long_rounded, '/history'),
       _HomeAction('Terminal Settings', Icons.settings_rounded, '/settings'),
+      _HomeAction('Local API Monitor', Icons.lan_rounded, '/api-monitor'),
       _HomeAction(
           'Developer Documentation', Icons.code_rounded, '/developer-docs'),
     ];
@@ -135,7 +138,11 @@ class HomeScreen extends ConsumerWidget {
                       engine.config.integrationModeEnabled
                           ? 'Enabled'
                           : 'Disabled'),
-                  const _DataRow('API simulator mode', 'Available in Phase 5'),
+                  _DataRow(
+                      'API simulator mode',
+                      api.isRunning
+                          ? 'Listening on ${api.server.boundPort}'
+                          : 'Stopped'),
                   _DataRow(
                       'Pairing state',
                       engine.pairingSession == null
@@ -1636,6 +1643,7 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = ref.watch(simulatorControllerProvider);
+    final api = ref.watch(apiControllerProvider);
     final config = c.engine.config;
     return TerminalPageScaffold(
         title: 'Terminal settings',
@@ -1718,12 +1726,23 @@ class SettingsScreen extends ConsumerWidget {
                   c.setDeveloperDetailsEnabled(v);
                 },
                 title: const Text('Developer details enabled')),
-            const SwitchListTile(
+            SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                value: false,
-                onChanged: null,
-                title: Text('API simulator'),
-                subtitle: Text('Available in Phase 5'))
+                value: api.isRunning,
+                onChanged: !api.isSupported || api.working
+                    ? null
+                    : (value) => value ? api.start() : api.stop(),
+                title: const Text('Local API simulator'),
+                subtitle: Text(api.isSupported
+                    ? api.isRunning
+                        ? 'http://${api.server.address}:${api.server.boundPort} · UDP ${api.discoveryPort}'
+                        : 'HTTP ${api.port} · UDP discovery ${api.discoveryPort}'
+                    : 'Unavailable in browsers; use Android or desktop')),
+            const SizedBox(height: 8),
+            SecondaryTerminalButton(
+                label: 'Open API monitor',
+                icon: Icons.lan_rounded,
+                onPressed: () => context.push('/api-monitor'))
           ]),
           _SettingsSection('Data', Icons.storage_outlined, [
             SecondaryTerminalButton(
@@ -1859,7 +1878,7 @@ class _DeveloperDocsScreenState extends State<DeveloperDocsScreen> {
     'Scenario catalog':
         'Presets cover approval, rejection, cancellation, timeout, busy terminal, session errors, refund and void outcomes.',
     'Limitations':
-        'This is a simulator. Local HTTP API is not part of Phase 4 and will be added in Phase 5. Refund linking by original transaction ID is simulator-specific behavior.',
+        'This is a simulator. The local HTTP API is intended only for private development networks. Refund linking by original transaction ID is simulator-specific behavior.',
   };
   @override
   Widget build(BuildContext context) {
