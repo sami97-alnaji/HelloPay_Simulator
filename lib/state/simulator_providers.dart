@@ -1,21 +1,24 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../domain/demo_data.dart';
 import '../domain/models.dart';
 import '../domain/simulator_engine.dart';
+import 'simulator_controller.dart';
 
-final simulatorEngineProvider =
-    Provider<SimulatorEngine>((ref) => SimulatorEngine());
+final simulatorControllerProvider =
+    ChangeNotifierProvider<SimulatorController>((ref) => SimulatorController());
+final simulatorEngineProvider = Provider<SimulatorEngine>(
+    (ref) => ref.watch(simulatorControllerProvider).engine);
 final terminalStateProvider = Provider<TerminalRuntimeState>(
-    (ref) => ref.watch(simulatorEngineProvider).runtimeState);
+    (ref) => ref.watch(simulatorControllerProvider).engine.runtimeState);
 final pairingStateProvider = Provider<PairingSession?>(
-    (ref) => ref.watch(simulatorEngineProvider).pairingSession);
-final selectedCardProvider =
-    StateProvider<DemoCard>((ref) => DemoCards.all.first);
-final selectedScenarioProvider =
-    StateProvider<ScenarioPreset>((ref) => ScenarioPresets.all.first);
+    (ref) => ref.watch(simulatorControllerProvider).engine.pairingSession);
+final selectedCardProvider = Provider<DemoCard>(
+    (ref) => ref.watch(simulatorControllerProvider).selectedCard);
+final selectedScenarioProvider = Provider<ScenarioPreset>(
+    (ref) => ref.watch(simulatorControllerProvider).selectedScenario);
 final currentTransactionProvider = Provider<Transaction?>(
-    (ref) => ref.watch(simulatorEngineProvider).activeTransaction);
+    (ref) => ref.watch(simulatorControllerProvider).engine.activeTransaction);
 final transactionHistoryProvider = Provider<List<Transaction>>((ref) =>
-    List.unmodifiable(ref.watch(simulatorEngineProvider).transactionHistory));
+    List.unmodifiable(
+        ref.watch(simulatorControllerProvider).engine.transactionHistory));
 final simulatorSettingsProvider = Provider<TerminalConfig>(
-    (ref) => ref.watch(simulatorEngineProvider).config);
+    (ref) => ref.watch(simulatorControllerProvider).engine.config);

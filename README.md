@@ -1,28 +1,84 @@
-# HelloPay_Simulator
+# HelloPay Simulator
 
-HelloPay Simulator
+HelloPay Simulator is a Flutter development and demo terminal for exercising
+pairing, payment, PIN, receipt, recovery, refund, and void flows without
+processing real money. Its phone and tablet UI uses the same shared
+`SimulatorEngine` as the domain tests, so widgets do not reimplement payment
+rules.
 
-## Getting Started
+> **Simulator only:** this application does not process real money, store real
+> card details, or provide a legally/fiscally valid receipt.
 
-This project is a starting point for a Flutter application.
+## Current status
 
-A few resources to get you started if this is your first Flutter project:
+Phase 4 is implemented: the complete visual demo flow, reusable terminal
+components, Riverpod state, routing, responsive layouts, accessibility
+semantics, in-app developer documentation, and transaction history are
+available. The Local HTTP API server is intentionally deferred to Phase 5.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Supported visual flows
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Splash and responsive standby terminal
+- OTP generation, one-time validation, pairing success, and session expiry
+- Amount, nullable tip, service charge, payment method, and request metadata
+- Twelve fictional masked test cards with search and filters
+- Tap, insert, swipe, PIN, processing, approved, declined, cancelled, and
+  timeout recovery flows
+- Demo receipt preview and copy actions
+- Scenario Studio with preset state-transition preview and custom JSON checks
+- Auditable transaction history and detail views
+- Terminal, tipping, pairing/session, simulator, and data settings
+- Searchable developer reference
 
-## Phase 3 simulator domain layer
+## Test cards
 
-The simulator includes centralized HelloPay-inspired light theme tokens,
-immutable protocol models, fictional test cards, scenario presets, a shared
-simulator engine, and Riverpod provider entry points. Demo mode and a future
-local API mode use the same engine and validation rules.
+The app includes 12 fictional cards. They contain masked display values only;
+no valid complete PAN is supported. Cards select expected interaction, PIN,
+signature, payment method, and simulator result behavior.
 
-Refunds can optionally link to an original simulator transaction ID. This is a
-simulator behavior for testing refundable balances; it is not a claim about
-the production HelloPay protocol, whose source material does not clearly
-define original-transaction linking.
+## Run
+
+```powershell
+flutter pub get
+flutter run -d chrome
+```
+
+Any Flutter-supported target generated for the project can use the same app
+shell. Chrome is the verified Phase 4 runtime target.
+
+## Test and validate
+
+```powershell
+dart format .
+flutter analyze
+flutter test
+git diff --check
+```
+
+The engine suite groups the complete Phase 3 behavior matrix into focused
+tests. The Phase 4 suite adds controller and widget coverage for splash,
+standby, pairing, tip transmission modes, card/PIN routing, exact-once
+execution, results, receipt, history, reset, and the required phone/tablet
+sizes.
+
+## Screenshots
+
+Runtime captures are stored in [`docs/screenshots/`](docs/screenshots/):
+
+- `standby.png`
+- `payment-entry.png`
+- `test-cards.png`
+- `card-presentation.png`
+- `pin-entry.png`
+- `processing.png`
+- `approved-result.png`
+- `declined-result.png`
+- `scenario-studio.png`
+- `receipt.png`
+
+## Simulator-specific behavior
+
+Refunds may link to an original simulator transaction ID to test remaining
+refundable balances. This is simulator-specific behavior, not a claim about a
+production HelloPay protocol. The Local HTTP API and endpoint simulation will
+be introduced in Phase 5.
