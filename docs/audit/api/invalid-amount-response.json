@@ -1,0 +1,14 @@
+{
+  "requestId": "AUDIT-ZERO",
+  "errorCode": 1002,
+  "errorMessage": "Enter an amount greater than zero.",
+  "timestamp": "2026-07-15T16:01:38.340822Z",
+  "error": {
+    "code": 1002,
+    "name": "invalidAmount",
+    "developerMessage": "Simulator error 1002: invalidAmount.",
+    "userMessage": "Enter an amount greater than zero.",
+    "recoverable": true,
+    "recommendedAction": "Review the request and retry when appropriate."
+  }
+}

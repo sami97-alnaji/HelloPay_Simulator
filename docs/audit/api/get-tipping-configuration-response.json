@@ -1,0 +1,10 @@
+{
+  "requestId": "AUDIT-TIP",
+  "errorCode": 0,
+  "errorMessage": null,
+  "timestamp": "2026-07-15T16:01:38.272346Z",
+  "enabled": true,
+  "maximumTipAmount": 10000.0,
+  "maximumTipPercentage": 20.0,
+  "currency": "HUF"
+}

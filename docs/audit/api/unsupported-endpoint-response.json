@@ -1,0 +1,6 @@
+{
+  "requestId": "AUDIT-UNSUPPORTED",
+  "errorCode": 1008,
+  "errorMessage": "Unsupported endpoint",
+  "timestamp": "2026-07-15T16:01:38.465987Z"
+}

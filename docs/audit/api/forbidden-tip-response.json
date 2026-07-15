@@ -1,0 +1,14 @@
+{
+  "requestId": "AUDIT-SZEP-TIP",
+  "errorCode": 1005,
+  "errorMessage": "The request could not be completed.",
+  "timestamp": "2026-07-15T16:01:38.351217Z",
+  "error": {
+    "code": 1005,
+    "name": "tipNotAllowedForPaymentMethod",
+    "developerMessage": "Simulator error 1005: tipNotAllowedForPaymentMethod.",
+    "userMessage": "The request could not be completed.",
+    "recoverable": true,
+    "recommendedAction": "Review the request and retry when appropriate."
+  }
+}

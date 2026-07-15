@@ -58,6 +58,48 @@ void main() {
     expect(response['errorCode'], 0);
   });
 
+  test('versioned API routes use the same server and session contract',
+      () async {
+    final health = await call('GET', '/api/v1/health', null, 200);
+    expect(health['healthy'], isTrue);
+    final token = engine.generateOtp().value;
+    final pairResponse = await call(
+        'POST',
+        '/api/v1/pair',
+        {
+          'requestId': 'V1-PAIR',
+          'token': token,
+          'posId': 'POS-V1',
+          'posName': 'Versioned POS'
+        },
+        200);
+    final session = (pairResponse['session'] as Map)['sessionId'];
+    final payment = await call(
+        'POST',
+        '/api/v1/execute/payment',
+        {
+          'requestId': 'V1-PAY',
+          'sessionId': session,
+          'payload': {
+            'base': 100,
+            'service': 0,
+            'paymentMethod': 'BANK',
+          }
+        },
+        200);
+    expect((payment['transaction'] as Map)['requestId'], 'V1-PAY');
+    for (final path in [
+      '/api/v1/execute/getLastTransaction',
+      '/api/v1/execute/getTippingConfiguration',
+      '/api/v1/execute/getTerminalId',
+      '/api/v1/execute/getTerminalStatus',
+    ]) {
+      final response = await call('POST', path,
+          {'requestId': 'V1-${path.hashCode}', 'sessionId': session}, 200);
+      expect(response['errorCode'], 0);
+    }
+  });
+
   test('pair creates a session through an actual HTTP request', () async {
     final session = await pair();
     expect(session, startsWith('PS-'));
@@ -152,22 +194,26 @@ void main() {
     expect(server.isRunning, isFalse);
   });
 
-  test('monitor sanitizes tokens and nested PIN values', () async {
+  test('monitor sanitizes credentials, fingerprints and nested PIN values',
+      () async {
     await dispatcher.dispatch('POST', '/api/pair', {
       'requestId': 'SAFE',
       'token': '123456',
+      'certificateFingerprint': 'not-a-real-certificate',
       'posId': 'P',
       'posName': 'POS',
       'payload': {'pin': '9999'}
     });
     final logged = dispatcher.exchanges.first.request;
     expect(logged['token'], '[REDACTED]');
+    expect(logged['certificateFingerprint'], '[REDACTED]');
     expect((logged['payload'] as Map)['pin'], '[REDACTED]');
   });
 
   test('discovery payload publishes endpoint metadata only', () {
-    final payload = discoveryPayload('HP-SIM-001', 8443);
-    expect(payload['service'], 'HelloPay Simulator');
+    final payload =
+        discoveryPayload('HP-SIM-001', 'HelloPay Simulator', '127.0.0.1', 8443);
+    expect(payload['type'], 'HELLOPAY_DISCOVERY_RESPONSE');
     expect(payload['port'], 8443);
     expect(payload.containsKey('token'), isFalse);
   });

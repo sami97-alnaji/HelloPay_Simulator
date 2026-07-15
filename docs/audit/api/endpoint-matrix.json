@@ -1,0 +1,410 @@
+[
+  {
+    "name": "health",
+    "method": "GET",
+    "path": "/api/v1/health",
+    "status": 200,
+    "errorCode": 0,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "healthy",
+      "status"
+    ]
+  },
+  {
+    "name": "otp-handshake",
+    "method": "POST",
+    "path": "/api/v1/execute/otpHandshake",
+    "status": 200,
+    "errorCode": 0,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "token",
+      "expiresAt"
+    ]
+  },
+  {
+    "name": "pair",
+    "method": "POST",
+    "path": "/api/v1/pair",
+    "status": 200,
+    "errorCode": 0,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "session"
+    ]
+  },
+  {
+    "name": "payment",
+    "method": "POST",
+    "path": "/api/v1/execute/payment",
+    "status": 200,
+    "errorCode": 0,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "transaction"
+    ]
+  },
+  {
+    "name": "get-last-transaction",
+    "method": "POST",
+    "path": "/api/v1/execute/getLastTransaction",
+    "status": 200,
+    "errorCode": 0,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "transaction"
+    ]
+  },
+  {
+    "name": "get-tipping-configuration",
+    "method": "POST",
+    "path": "/api/v1/execute/getTippingConfiguration",
+    "status": 200,
+    "errorCode": 0,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "enabled",
+      "maximumTipAmount",
+      "maximumTipPercentage",
+      "currency"
+    ]
+  },
+  {
+    "name": "get-terminal-id",
+    "method": "POST",
+    "path": "/api/v1/execute/getTerminalId",
+    "status": 200,
+    "errorCode": 0,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "terminalId"
+    ]
+  },
+  {
+    "name": "get-terminal-status",
+    "method": "POST",
+    "path": "/api/v1/execute/getTerminalStatus",
+    "status": 200,
+    "errorCode": 0,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "status"
+    ]
+  },
+  {
+    "name": "refund",
+    "method": "POST",
+    "path": "/api/v1/execute/refund",
+    "status": 200,
+    "errorCode": 0,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "transaction"
+    ]
+  },
+  {
+    "name": "void-sale",
+    "method": "POST",
+    "path": "/api/v1/execute/payment",
+    "status": 200,
+    "errorCode": 0,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "transaction"
+    ]
+  },
+  {
+    "name": "void",
+    "method": "POST",
+    "path": "/api/v1/execute/voidLastTransaction",
+    "status": 200,
+    "errorCode": 0,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "transaction"
+    ]
+  },
+  {
+    "name": "storno-sale",
+    "method": "POST",
+    "path": "/api/v1/execute/payment",
+    "status": 200,
+    "errorCode": 0,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "transaction"
+    ]
+  },
+  {
+    "name": "storno",
+    "method": "POST",
+    "path": "/api/v1/execute/storno",
+    "status": 200,
+    "errorCode": 0,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "transaction"
+    ]
+  },
+  {
+    "name": "close",
+    "method": "POST",
+    "path": "/api/v1/execute/close",
+    "status": 200,
+    "errorCode": 0,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "settlement"
+    ]
+  },
+  {
+    "name": "close-batch",
+    "method": "POST",
+    "path": "/api/v1/execute/closeBatch",
+    "status": 200,
+    "errorCode": 0,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "settlement"
+    ]
+  },
+  {
+    "name": "malformed-json",
+    "method": "POST",
+    "path": "/api/v1/pair",
+    "status": 400,
+    "errorCode": 3011,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp"
+    ]
+  },
+  {
+    "name": "missing-session",
+    "method": "POST",
+    "path": "/api/v1/execute/payment",
+    "status": 401,
+    "errorCode": 3005,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "error"
+    ]
+  },
+  {
+    "name": "unknown-session",
+    "method": "POST",
+    "path": "/api/v1/execute/payment",
+    "status": 401,
+    "errorCode": 3005,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "error"
+    ]
+  },
+  {
+    "name": "invalid-amount",
+    "method": "POST",
+    "path": "/api/v1/execute/payment",
+    "status": 422,
+    "errorCode": 1002,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "error"
+    ]
+  },
+  {
+    "name": "negative-tip",
+    "method": "POST",
+    "path": "/api/v1/execute/payment",
+    "status": 422,
+    "errorCode": 1003,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "error"
+    ]
+  },
+  {
+    "name": "forbidden-tip",
+    "method": "POST",
+    "path": "/api/v1/execute/payment",
+    "status": 422,
+    "errorCode": 1005,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "error"
+    ]
+  },
+  {
+    "name": "integration-disabled",
+    "method": "POST",
+    "path": "/api/v1/execute/payment",
+    "status": 422,
+    "errorCode": 1009,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "error"
+    ]
+  },
+  {
+    "name": "concurrent-busy",
+    "method": "POST",
+    "path": "/api/v1/execute/payment",
+    "status": 409,
+    "errorCode": 1011,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "error"
+    ]
+  },
+  {
+    "name": "concurrent-first",
+    "method": "POST",
+    "path": "/api/v1/execute/payment",
+    "status": 200,
+    "errorCode": 0,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "transaction"
+    ]
+  },
+  {
+    "name": "unsupported-endpoint",
+    "method": "POST",
+    "path": "/api/v1/execute/unsupported",
+    "status": 404,
+    "errorCode": 1008,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp"
+    ]
+  },
+  {
+    "name": "expired-session",
+    "method": "POST",
+    "path": "/api/v1/execute/getTerminalStatus",
+    "status": 401,
+    "errorCode": 3004,
+    "fields": [
+      "requestId",
+      "errorCode",
+      "errorMessage",
+      "timestamp",
+      "error"
+    ]
+  },
+  {
+    "name": "udp-discovery",
+    "method": "UDP",
+    "path": "38383",
+    "status": "response",
+    "errorCode": 0,
+    "fields": [
+      "type",
+      "terminalId",
+      "deviceName",
+      "ipAddress",
+      "protocol",
+      "port",
+      "version",
+      "apiVersion"
+    ]
+  },
+  {
+    "name": "duplicate-start",
+    "method": "lifecycle",
+    "path": "server.start",
+    "status": "protected",
+    "errorCode": 0,
+    "fields": []
+  },
+  {
+    "name": "stop",
+    "method": "lifecycle",
+    "path": "server.stop",
+    "status": "stopped",
+    "errorCode": 0,
+    "fields": []
+  },
+  {
+    "name": "restart",
+    "method": "lifecycle",
+    "path": "server.start",
+    "status": "running",
+    "errorCode": 0,
+    "fields": []
+  }
+]

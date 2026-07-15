@@ -1,0 +1,36 @@
+{
+  "requestId": "AUDIT-REFUND",
+  "errorCode": 0,
+  "errorMessage": null,
+  "timestamp": "2026-07-15T16:01:38.293539Z",
+  "transaction": {
+    "transactionId": "REF-1784131298292-21092",
+    "requestId": "AUDIT-REFUND",
+    "externalId": "EXT-1784131298292-61776",
+    "type": "REFUND",
+    "status": "SUCCESS",
+    "baseAmount": 1000.0,
+    "tipAmount": 0.0,
+    "serviceAmount": 0.0,
+    "totalAmount": 1000.0,
+    "refundedAmount": 0.0,
+    "paymentMethod": "BANK",
+    "paymentProcessor": "HelloPay Simulator",
+    "cardType": "Visa",
+    "maskedCardNumber": "•••• •••• •••• 1001",
+    "cardNumberLast4": "1001",
+    "requireSignature": false,
+    "userCode": "audit",
+    "remoteIdentity": null,
+    "createdAt": "2026-07-15T16:01:38.291584Z",
+    "completedAt": "2026-07-15T16:01:38.291584Z",
+    "receiptData": {
+      "type": "TEXT",
+      "content": "SIMULATOR REFUND RECEIPT",
+      "mimeType": "text/plain",
+      "createdAt": "2026-07-15T16:01:38.291584Z"
+    },
+    "errorCode": null,
+    "errorMessage": null
+  }
+}

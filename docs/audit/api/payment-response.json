@@ -1,0 +1,36 @@
+{
+  "requestId": "AUDIT-PAY-1",
+  "errorCode": 0,
+  "errorMessage": null,
+  "timestamp": "2026-07-15T16:01:38.261017Z",
+  "transaction": {
+    "transactionId": "TXN-1784131298260-53630",
+    "requestId": "AUDIT-PAY-1",
+    "externalId": "EXT-1784131298260-82856",
+    "type": "PAYMENT",
+    "status": "SUCCESS",
+    "baseAmount": 12500.0,
+    "tipAmount": 0.0,
+    "serviceAmount": 0.0,
+    "totalAmount": 12500.0,
+    "refundedAmount": 0.0,
+    "paymentMethod": "BANK",
+    "paymentProcessor": "HelloPay Simulator",
+    "cardType": "Visa",
+    "maskedCardNumber": "•••• •••• •••• 1001",
+    "cardNumberLast4": "1001",
+    "requireSignature": false,
+    "userCode": null,
+    "remoteIdentity": null,
+    "createdAt": "2026-07-15T16:01:38.259037Z",
+    "completedAt": "2026-07-15T16:01:38.260011Z",
+    "receiptData": {
+      "type": "TEXT",
+      "content": "SIMULATOR RECEIPT",
+      "mimeType": "text/plain",
+      "createdAt": "2026-07-15T16:01:38.260011Z"
+    },
+    "errorCode": null,
+    "errorMessage": null
+  }
+}

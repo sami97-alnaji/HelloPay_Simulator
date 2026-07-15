@@ -1,0 +1,14 @@
+{
+  "requestId": "AUDIT-CONCURRENT-B",
+  "errorCode": 1011,
+  "errorMessage": "The terminal is busy. Please wait.",
+  "timestamp": "2026-07-15T16:01:38.372420Z",
+  "error": {
+    "code": 1011,
+    "name": "terminalBusy",
+    "developerMessage": "Simulator error 1011: terminalBusy.",
+    "userMessage": "The terminal is busy. Please wait.",
+    "recoverable": true,
+    "recommendedAction": "Review the request and retry when appropriate."
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "requestId": "AUDIT-VOID",
+  "errorCode": 0,
+  "errorMessage": null,
+  "timestamp": "2026-07-15T16:01:38.302936Z",
+  "transaction": {
+    "transactionId": "VOID-1784131298302-28880",
+    "requestId": "AUDIT-VOID",
+    "externalId": "EXT-1784131298302-74620",
+    "type": "VOID",
+    "status": "SUCCESS",
+    "baseAmount": 200.0,
+    "tipAmount": 0.0,
+    "serviceAmount": 0.0,
+    "totalAmount": 200.0,
+    "refundedAmount": 0.0,
+    "paymentMethod": "BANK",
+    "paymentProcessor": "HelloPay Simulator",
+    "cardType": "Visa",
+    "maskedCardNumber": "•••• •••• •••• 1001",
+    "cardNumberLast4": "1001",
+    "requireSignature": false,
+    "userCode": "audit",
+    "remoteIdentity": null,
+    "createdAt": "2026-07-15T16:01:38.302936Z",
+    "completedAt": "2026-07-15T16:01:38.302936Z",
+    "receiptData": null,
+    "errorCode": null,
+    "errorMessage": null
+  }
+}

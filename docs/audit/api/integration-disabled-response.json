@@ -1,0 +1,14 @@
+{
+  "requestId": "AUDIT-DISABLED",
+  "errorCode": 1009,
+  "errorMessage": "The request could not be completed.",
+  "timestamp": "2026-07-15T16:01:38.355098Z",
+  "error": {
+    "code": 1009,
+    "name": "notInIntegrationMode",
+    "developerMessage": "Simulator error 1009: notInIntegrationMode.",
+    "userMessage": "The request could not be completed.",
+    "recoverable": true,
+    "recommendedAction": "Review the request and retry when appropriate."
+  }
+}

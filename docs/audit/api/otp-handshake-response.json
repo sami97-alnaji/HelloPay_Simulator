@@ -1,0 +1,8 @@
+{
+  "requestId": "AUDIT-OTP",
+  "errorCode": 0,
+  "errorMessage": null,
+  "timestamp": "2026-07-15T16:01:38.246699Z",
+  "token": "[REDACTED]",
+  "expiresAt": "2026-07-15T16:06:38.245694Z"
+}

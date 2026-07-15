@@ -1,0 +1,14 @@
+{
+  "requestId": "AUDIT-EXPIRED",
+  "errorCode": 3004,
+  "errorMessage": "The request could not be completed.",
+  "timestamp": "2026-07-15T16:01:38.469485Z",
+  "error": {
+    "code": 3004,
+    "name": "sessionExpired",
+    "developerMessage": "Simulator error 3004: sessionExpired.",
+    "userMessage": "The request could not be completed.",
+    "recoverable": true,
+    "recommendedAction": "Review the request and retry when appropriate."
+  }
+}

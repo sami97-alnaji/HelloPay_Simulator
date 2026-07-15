@@ -1,0 +1,14 @@
+{
+  "requestId": "AUDIT-UNKNOWN-SESSION",
+  "errorCode": 3005,
+  "errorMessage": "The request could not be completed.",
+  "timestamp": "2026-07-15T16:01:38.336954Z",
+  "error": {
+    "code": 3005,
+    "name": "sessionNotFound",
+    "developerMessage": "Simulator error 3005: sessionNotFound.",
+    "userMessage": "The request could not be completed.",
+    "recoverable": true,
+    "recommendedAction": "Review the request and retry when appropriate."
+  }
+}

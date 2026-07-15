@@ -26,11 +26,14 @@ class LocalApiServer {
         if (event != RawSocketEvent.read) return;
         final packet = _udp!.receive();
         if (packet == null) return;
-        final text =
-            utf8.decode(packet.data, allowMalformed: true).trim().toUpperCase();
-        if (text == 'HELLOPAY_DISCOVER' || text.contains('DISCOVER')) {
+        final text = utf8.decode(packet.data, allowMalformed: true).trim();
+        final isDiscovery = _isDiscoveryRequest(text);
+        if (isDiscovery) {
           final response = utf8.encode(jsonEncode(discoveryPayload(
-              dispatcher.engine.getTerminalId(), boundPort ?? port)));
+              dispatcher.engine.getTerminalId(),
+              dispatcher.engine.config.deviceName,
+              address ?? '0.0.0.0',
+              boundPort ?? port)));
           _udp!.send(response, packet.address, packet.port);
         }
       });
@@ -76,10 +79,26 @@ class LocalApiServer {
   }
 }
 
-Map<String, Object?> discoveryPayload(String terminalId, int port) => {
-      'service': 'HelloPay Simulator',
+bool _isDiscoveryRequest(String raw) {
+  if (raw.toUpperCase() == 'HELLOPAY_DISCOVER') return true;
+  try {
+    final decoded = jsonDecode(raw);
+    return decoded is Map &&
+        decoded['type']?.toString().toUpperCase() == 'HELLOPAY_DISCOVERY';
+  } on FormatException {
+    return false;
+  }
+}
+
+Map<String, Object?> discoveryPayload(
+        String terminalId, String deviceName, String ipAddress, int port) =>
+    {
+      'type': 'HELLOPAY_DISCOVERY_RESPONSE',
       'terminalId': terminalId,
+      'deviceName': deviceName,
+      'ipAddress': ipAddress,
       'protocol': 'http',
       'port': port,
-      'apiVersion': 'v1'
+      'version': '1.0',
+      'apiVersion': 'v1',
     };

@@ -1,0 +1,16 @@
+{
+  "requestId": "AUDIT-PAIR",
+  "errorCode": 0,
+  "errorMessage": null,
+  "timestamp": "2026-07-15T16:01:38.252126Z",
+  "session": {
+    "sessionId": "PS-1784131298251-22667",
+    "terminalId": "HP-SIM-001",
+    "posId": "AUDIT-POS",
+    "posName": "Phase 7 Audit",
+    "certificateFingerprint": "[REDACTED]",
+    "createdAt": "2026-07-15T16:01:38.251141Z",
+    "expiresAt": "2026-07-16T00:01:38.251141Z",
+    "isActive": true
+  }
+}

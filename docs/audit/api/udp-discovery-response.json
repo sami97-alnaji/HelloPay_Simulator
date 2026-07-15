@@ -1,0 +1,10 @@
+{
+  "type": "HELLOPAY_DISCOVERY_RESPONSE",
+  "terminalId": "HP-SIM-001",
+  "deviceName": "HelloPay Simulator",
+  "ipAddress": "127.0.0.1",
+  "protocol": "http",
+  "port": 21465,
+  "version": "1.0",
+  "apiVersion": "v1"
+}

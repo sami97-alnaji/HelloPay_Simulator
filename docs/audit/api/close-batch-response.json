@@ -1,0 +1,19 @@
+{
+  "requestId": "AUDIT-CLOSE-BATCH",
+  "errorCode": 0,
+  "errorMessage": null,
+  "timestamp": "2026-07-15T16:01:38.319663Z",
+  "settlement": {
+    "reportId": "SET-1784131298319-04642",
+    "openedAt": "2026-07-15T16:01:38.259037Z",
+    "closedAt": "2026-07-15T16:01:38.319663Z",
+    "paymentCount": 3,
+    "refundCount": 1,
+    "voidCount": 2,
+    "grossAmount": 13000.0,
+    "refundAmount": 1000.0,
+    "netAmount": 12000.0,
+    "helloPayReceipt": "SIMULATOR SETTLEMENT",
+    "otpReceipt": "865363"
+  }
+}

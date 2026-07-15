@@ -1,0 +1,14 @@
+{
+  "requestId": "AUDIT-NEG-TIP",
+  "errorCode": 1003,
+  "errorMessage": "The request could not be completed.",
+  "timestamp": "2026-07-15T16:01:38.346708Z",
+  "error": {
+    "code": 1003,
+    "name": "negativeTip",
+    "developerMessage": "Simulator error 1003: negativeTip.",
+    "userMessage": "The request could not be completed.",
+    "recoverable": true,
+    "recommendedAction": "Review the request and retry when appropriate."
+  }
+}

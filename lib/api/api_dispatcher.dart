@@ -37,7 +37,7 @@ class SimulatorApiDispatcher {
 
   Future<ApiResponse> dispatch(String method, String path, Json body) async {
     final normalizedMethod = method.toUpperCase();
-    final cleanPath = path.split('?').first;
+    final cleanPath = _canonicalPath(path.split('?').first);
     final requestId = body['requestId']?.toString() ??
         (body['payload'] is Map
             ? (body['payload'] as Map)['requestId']?.toString()
@@ -117,6 +117,19 @@ class SimulatorApiDispatcher {
         ? Map<String, dynamic>.from(body['payload'] as Map)
         : Map<String, dynamic>.from(body);
     payload.putIfAbsent('requestId', () => requestId);
+    if (path == '/api/lastTransaction') {
+      return _success(
+          requestId, {'transaction': engine.getLastTransaction()?.toJson()});
+    }
+    if (path == '/api/tipping') {
+      return _success(requestId, engine.getTippingConfiguration());
+    }
+    if (path == '/api/terminalId') {
+      return _success(requestId, {'terminalId': engine.getTerminalId()});
+    }
+    if (path == '/api/status') {
+      return _success(requestId, {'status': engine.getTerminalStatus().wire});
+    }
     if (path == '/api/payment') {
       return _result(
           requestId,
@@ -141,6 +154,23 @@ class SimulatorApiDispatcher {
     }
     return ApiResponse(404, _envelope(requestId, 1008, 'Unsupported endpoint'));
   }
+
+  String _canonicalPath(String path) => switch (path) {
+        '/api/v1/health' => '/api/health',
+        '/api/v1/pair' => '/api/pair',
+        '/api/v1/execute/payment' => '/api/payment',
+        '/api/v1/execute/refund' => '/api/refund',
+        '/api/v1/execute/voidLastTransaction' => '/api/void',
+        '/api/v1/execute/storno' => '/api/storno',
+        '/api/v1/execute/close' => '/api/close',
+        '/api/v1/execute/closeBatch' => '/api/closeBatch',
+        '/api/v1/execute/getLastTransaction' => '/api/lastTransaction',
+        '/api/v1/execute/getTippingConfiguration' => '/api/tipping',
+        '/api/v1/execute/getTerminalId' => '/api/terminalId',
+        '/api/v1/execute/getTerminalStatus' => '/api/status',
+        '/api/v1/execute/otpHandshake' => '/api/otpHandshake',
+        _ => path,
+      };
 
   SimulatorError? _validateSession(Json body) {
     if (!engine.isSessionValid) return ErrorCatalog.lookup(3004);
@@ -203,7 +233,9 @@ Json sanitizeJson(Map value) => value.map((key, raw) {
       final lower = key.toString().toLowerCase();
       if (lower.contains('pin') ||
           lower == 'token' ||
-          lower.contains('secret')) {
+          lower.contains('secret') ||
+          lower.contains('fingerprint') ||
+          lower.contains('certificate')) {
         return MapEntry(key.toString(), '[REDACTED]');
       }
       if (raw is Map) return MapEntry(key.toString(), sanitizeJson(raw));
