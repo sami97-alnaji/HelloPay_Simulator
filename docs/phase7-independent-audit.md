@@ -1,8 +1,8 @@
 # Phase 7 independent release audit
 
-**Audit time:** 2026-07-15T19:09:54+03:00  
-**Auditor environment:** Windows 11 10.0.28020.1921; Flutter 3.41.8 stable; Dart 3.11.5.  
-**Repository:** `C:/Users/samis/StudioProjects/hellopay_simulator`  
+**Audit time:** 2026-07-15T19:09:54+03:00
+**Auditor environment:** Windows 11 10.0.28020.1921; Flutter 3.41.8 stable; Dart 3.11.5.
+**Repository:** `C:/Users/samis/StudioProjects/hellopay_simulator`
 **Release baseline:** `v0.1.0-simulator` -> `f3b1581ba9925b2ffbf5f46d7f3bb4a9648fdf9f`
 
 ## Identity and history
