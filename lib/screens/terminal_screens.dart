@@ -70,7 +70,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       color: AppColors.hpOrange,
                       backgroundColor: AppColors.hpBorder)),
               const SizedBox(height: 16),
-              const Text('Version 1.0.0',
+              const Text('Version 0.1.0',
                   style: TextStyle(color: AppColors.hpTextMuted)),
             ]),
           )),

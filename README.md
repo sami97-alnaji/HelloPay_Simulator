@@ -42,11 +42,16 @@ signature, payment method, and simulator result behavior.
 ```powershell
 flutter pub get
 flutter run -d chrome
+flutter run -d windows
+flutter run -d emulator-5554
 ```
 
 Any Flutter-supported target generated for the project can use the same app
 shell. Chrome and an Android 15 API 35 emulator are verified Phase 4 runtime
 targets, including a complete approved-payment flow on the emulator.
+
+Native Android and Windows builds can host the local API. Web builds provide
+the visual simulator but intentionally disable local socket hosting.
 
 ## Test and validate
 

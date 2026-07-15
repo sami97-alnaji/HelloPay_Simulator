@@ -1,0 +1,5 @@
+name: hellopay_client_example
+description: Standalone client for the local HelloPay Simulator API.
+publish_to: none
+environment:
+  sdk: ^3.5.0

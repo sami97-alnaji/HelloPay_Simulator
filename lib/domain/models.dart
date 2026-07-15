@@ -50,7 +50,7 @@ class TerminalConfig extends ImmutableModel {
       ipAddress: '127.0.0.1',
       port: 8080,
       protocol: 'HTTP',
-      appVersion: '1.0.0',
+      appVersion: '0.1.0',
       integrationModeEnabled: true,
       apiSimulatorEnabled: true,
       tippingEnabled: true,
