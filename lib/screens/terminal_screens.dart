@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../domain/demo_data.dart';
 import '../domain/enums.dart';
 import '../domain/models.dart';
+import '../domain/simulator_engine.dart';
 import '../state/simulator_controller.dart';
 import '../state/simulator_providers.dart';
 import '../theme/app_theme.dart';
@@ -727,17 +728,60 @@ class _CardsScreenState extends ConsumerState<CardsScreen> {
   }
 }
 
-class CardPresentationScreen extends ConsumerWidget {
+class CardPresentationScreen extends ConsumerStatefulWidget {
   const CardPresentationScreen({super.key});
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CardPresentationScreen> createState() =>
+      _CardPresentationScreenState();
+}
+
+class _CardPresentationScreenState
+    extends ConsumerState<CardPresentationScreen> {
+  CardPresentationVisualState visualState = CardPresentationVisualState.present;
+  bool advancing = false;
+
+  Future<void> advance() async {
+    final c = ref.read(simulatorControllerProvider);
+    final card = c.selectedCard;
+    if (c.pendingRequest == null || advancing) return;
+    if (card.id == 'contactless-fallback' &&
+        visualState == CardPresentationVisualState.present) {
+      setState(
+          () => visualState = CardPresentationVisualState.contactlessFailed);
+      return;
+    }
+    if (visualState == CardPresentationVisualState.contactlessFailed) {
+      setState(() => visualState = CardPresentationVisualState.insertFallback);
+      return;
+    }
+    setState(() {
+      visualState = CardPresentationVisualState.reading;
+      advancing = true;
+    });
+    if (!MediaQuery.disableAnimationsOf(context)) {
+      await Future<void>.delayed(const Duration(milliseconds: 520));
+    }
+    if (!mounted) return;
+    final needsPin = card.requiresPin || c.selectedScenario.requiresPin;
+    context.go(needsPin ? '/pin' : '/processing');
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final c = ref.watch(simulatorControllerProvider);
     final card = c.selectedCard;
     final request = c.pendingRequest;
-    final instruction = switch (card.interactionMethod) {
-      CardInteractionMethod.contactless => 'Tap card',
-      CardInteractionMethod.insert => 'Insert card',
-      CardInteractionMethod.swipe => 'Swipe card'
+    final instruction = switch (visualState) {
+      CardPresentationVisualState.contactlessFailed => 'Use chip instead',
+      CardPresentationVisualState.insertFallback => 'Insert card',
+      CardPresentationVisualState.reading => 'Reading card',
+      CardPresentationVisualState.removeCard => 'Remove card',
+      CardPresentationVisualState.present => switch (card.interactionMethod) {
+          CardInteractionMethod.contactless => 'Tap card',
+          CardInteractionMethod.insert => 'Insert card',
+          CardInteractionMethod.swipe => 'Swipe card'
+        },
     };
     return TerminalPageScaffold(
         title: 'Present card',
@@ -748,65 +792,42 @@ class CardPresentationScreen extends ConsumerWidget {
             icon: card.interactionMethod == CardInteractionMethod.contactless
                 ? Icons.contactless_rounded
                 : Icons.credit_card_rounded,
-            onPressed: request == null
-                ? null
-                : () {
-                    final needsPin =
-                        card.requiresPin || c.selectedScenario.requiresPin;
-                    context.go(needsPin ? '/pin' : '/processing');
-                  }),
-        child: Column(children: [
-          if (request != null)
-            AmountDisplay(
-                amount: request.base + (request.tip ?? 0) + request.service),
-          const SizedBox(height: 18),
-          TerminalPanel(
-              child: Column(children: [
-            PaymentCardVisual(card: card, selected: true),
-            const SizedBox(height: 28),
-            Container(
-                width: 190,
-                height: 150,
-                decoration: BoxDecoration(
-                    color: AppColors.hpText,
-                    borderRadius: BorderRadius.circular(22)),
-                child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.point_of_sale_rounded,
-                          color: Colors.white, size: 52),
-                      const SizedBox(height: 10),
-                      Icon(
-                          card.interactionMethod ==
-                                  CardInteractionMethod.contactless
-                              ? Icons.keyboard_double_arrow_down_rounded
-                              : Icons.arrow_downward_rounded,
-                          color: AppColors.hpLime,
-                          size: 34)
-                    ])),
-            const SizedBox(height: 22),
-            Text(instruction,
-                style:
-                    const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 6),
-            Text(
-                card.interactionMethod == CardInteractionMethod.contactless
-                    ? 'Hold the card near the terminal reader'
-                    : 'Follow the terminal reader direction',
-                textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            Text('Scenario: ${c.selectedScenario.name}',
-                style: const TextStyle(color: AppColors.hpTextMuted)),
-          ])),
-          const SizedBox(height: 12),
-          SecondaryTerminalButton(
-              label: 'Customer cancel',
-              icon: Icons.close_rounded,
-              onPressed: () {
-                ref.read(simulatorControllerProvider).cancelPayment();
-                context.go('/processing');
-              }),
-        ]));
+            loading: advancing,
+            onPressed: request == null ? null : advance),
+        child: Center(
+            child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 760),
+                child: Column(children: [
+                  if (request != null)
+                    AmountDisplay(
+                        amount: request.base +
+                            (request.tip ?? 0) +
+                            request.service),
+                  const SizedBox(height: 18),
+                  TerminalReaderScene(card: card, state: visualState),
+                  const SizedBox(height: 18),
+                  Text(instruction,
+                      style: const TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 6),
+                  Text(
+                      visualState ==
+                              CardPresentationVisualState.contactlessFailed
+                          ? 'Contactless failed locally. Insert the same demo card.'
+                          : 'Follow the direction shown on the simulated reader.',
+                      textAlign: TextAlign.center),
+                  const SizedBox(height: 8),
+                  Text('Scenario: ${c.selectedScenario.name}',
+                      style: const TextStyle(color: AppColors.hpTextMuted)),
+                  const SizedBox(height: 12),
+                  SecondaryTerminalButton(
+                      label: 'Customer cancel',
+                      icon: Icons.close_rounded,
+                      onPressed: () {
+                        ref.read(simulatorControllerProvider).cancelPayment();
+                        context.go('/processing');
+                      }),
+                ]))));
   }
 }
 
@@ -1302,18 +1323,6 @@ class _ScenarioStudioScreenState extends ConsumerState<ScenarioStudioScreen> {
                       }
                     : null))
       ]),
-      const SizedBox(height: 10),
-      PrimaryTerminalButton(
-          label: 'Run Scenario',
-          icon: Icons.play_arrow,
-          onPressed: jsonError == null
-              ? () {
-                  final ctrl = ref.read(simulatorControllerProvider);
-                  ctrl.speed = speed;
-                  ctrl.selectScenario(configuredDraft());
-                  context.go('/payment');
-                }
-              : null),
     ]));
     final preview = TerminalPanel(
         child:
@@ -1338,6 +1347,17 @@ class _ScenarioStudioScreenState extends ConsumerState<ScenarioStudioScreen> {
         subtitle:
             'Configure a focused terminal test without a dashboard-style interface',
         status: c.engine.runtimeState.status,
+        action: PrimaryTerminalButton(
+            label: 'Run Scenario',
+            icon: Icons.play_arrow,
+            onPressed: jsonError == null
+                ? () {
+                    final ctrl = ref.read(simulatorControllerProvider);
+                    ctrl.setSpeed(speed);
+                    ctrl.selectScenario(configuredDraft());
+                    context.go('/payment');
+                  }
+                : null),
         child: _ResponsivePair(wide: wide, first: editor, second: preview));
   }
 }
@@ -1537,6 +1557,78 @@ class TransactionDetailScreen extends ConsumerWidget {
                           transaction: t)
                     ]))));
   }
+}
+
+/// Deterministic result renderer used by the visual QA catalogue.
+class DeveloperResultPreviewScreen extends StatefulWidget {
+  const DeveloperResultPreviewScreen({super.key, required this.kind});
+  final String kind;
+
+  @override
+  State<DeveloperResultPreviewScreen> createState() =>
+      _DeveloperResultPreviewScreenState();
+}
+
+class _DeveloperResultPreviewScreenState
+    extends State<DeveloperResultPreviewScreen> {
+  late Transaction transaction;
+
+  @override
+  void initState() {
+    super.initState();
+    transaction = _createTransaction();
+  }
+
+  @override
+  void didUpdateWidget(covariant DeveloperResultPreviewScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.kind != widget.kind) {
+      transaction = _createTransaction();
+    }
+  }
+
+  Transaction _createTransaction() {
+    final engine = SimulatorEngine();
+    if (widget.kind == 'timeout') {
+      engine.selectedScenario =
+          ScenarioPresets.all.firstWhere((preset) => preset.id == 'timeout');
+    }
+    final saleResult = engine.processPayment(const PaymentRequest(
+        requestId: 'VISUAL-QA-SALE',
+        base: 12500,
+        service: 0,
+        paymentMethod: PaymentMethod.bank,
+        userCode: 'visual-qa'));
+    final sale = saleResult.value ?? engine.transactionHistory.last;
+    return switch (widget.kind) {
+      'refund' => engine
+          .processRefund(RefundRequest(
+              requestId: 'VISUAL-QA-REFUND',
+              amount: 2500,
+              paymentMethod: PaymentMethod.bank,
+              userCode: 'visual-qa',
+              originalTransactionId: sale.transactionId))
+          .value!,
+      'void' => engine
+          .voidLastTransaction(VoidRequest(
+              requestId: 'VISUAL-QA-VOID',
+              lastTransactionId: sale.transactionId,
+              userCode: 'visual-qa'))
+          .value!,
+      'timeout' => sale,
+      _ => sale,
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) => TerminalPageScaffold(
+      title: 'Visual QA result',
+      subtitle: 'Deterministic simulator-only developer preview',
+      status: TerminalStatus.ready,
+      child: Center(
+          child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: TransactionResultView(transaction: transaction))));
 }
 
 class SettingsScreen extends ConsumerWidget {

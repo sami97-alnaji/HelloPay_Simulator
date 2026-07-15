@@ -7,8 +7,18 @@ import '../domain/enums.dart';
 import '../domain/models.dart';
 import '../theme/app_theme.dart';
 
-String money(num value, [String currency = 'HUF']) =>
-    '${value.toStringAsFixed(value % 1 == 0 ? 0 : 2)} $currency';
+String money(num value, [String currency = 'HUF']) {
+  final fixed = value.abs().toStringAsFixed(value % 1 == 0 ? 0 : 2);
+  final parts = fixed.split('.');
+  final digits = parts.first;
+  final buffer = StringBuffer();
+  for (var index = 0; index < digits.length; index++) {
+    if (index > 0 && (digits.length - index) % 3 == 0) buffer.write(' ');
+    buffer.write(digits[index]);
+  }
+  final decimal = parts.length == 2 ? ',${parts.last}' : '';
+  return '${value < 0 ? '-' : ''}$buffer$decimal $currency';
+}
 
 class TerminalPageScaffold extends StatelessWidget {
   const TerminalPageScaffold({
@@ -78,8 +88,6 @@ class TerminalPageScaffold extends StatelessWidget {
                                     ],
                                   ),
                                 ),
-                                if (status != null)
-                                  TerminalStatusChip(status: status!),
                               ],
                             ),
                             const SizedBox(height: 20),
@@ -318,19 +326,19 @@ class PaymentCardVisual extends StatelessWidget {
   final DemoCard card;
   final bool selected;
   Color get color => switch (card.visualVariant) {
-        'green' => const Color(0xFF3F7F3C),
-        'blue' => const Color(0xFF415B76),
-        'red' => const Color(0xFF963E38),
-        'orange' => const Color(0xFFC16D2E),
-        'lime' => const Color(0xFF78972E),
-        'black' => const Color(0xFF292929),
-        _ => const Color(0xFF696969),
+        'green' => AppColors.hpGreen,
+        'blue' => AppColors.hpText,
+        'red' => AppColors.hpDeclined,
+        'orange' => AppColors.hpOrangeDark,
+        'lime' => AppColors.hpLime,
+        'black' => AppColors.hpText,
+        _ => AppColors.hpTextMuted,
       };
   @override
   Widget build(BuildContext context) => AspectRatio(
         aspectRatio: 1.62,
         child: Container(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
               color: color,
               borderRadius: BorderRadius.circular(16),
@@ -359,22 +367,257 @@ class PaymentCardVisual extends StatelessWidget {
               const Spacer(),
               Text(card.maskedPan,
                   style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       letterSpacing: 1.5,
                       fontWeight: FontWeight.w700)),
-              const SizedBox(height: 12),
+              const SizedBox(height: 6),
               Row(children: [
                 Expanded(
                     child: Text(card.cardholderName,
-                        overflow: TextOverflow.ellipsis)),
-                Text(card.expiryLabel)
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 11))),
+                Text(card.expiryLabel, style: const TextStyle(fontSize: 11))
               ]),
-              const SizedBox(height: 6),
+              const SizedBox(height: 3),
               Text(card.cardType,
-                  style: const TextStyle(fontWeight: FontWeight.w800)),
+                  style: const TextStyle(
+                      fontSize: 11, fontWeight: FontWeight.w800)),
             ]),
           ),
         ),
+      );
+}
+
+enum CardPresentationVisualState {
+  present,
+  contactlessFailed,
+  insertFallback,
+  reading,
+  removeCard,
+}
+
+class TerminalReaderScene extends StatelessWidget {
+  const TerminalReaderScene({
+    super.key,
+    required this.card,
+    required this.state,
+  });
+
+  final DemoCard card;
+  final CardPresentationVisualState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final duration =
+        reduceMotion ? Duration.zero : const Duration(milliseconds: 420);
+    final method = state == CardPresentationVisualState.insertFallback
+        ? CardInteractionMethod.insert
+        : card.interactionMethod;
+    final isInsert = method == CardInteractionMethod.insert;
+    final isSwipe = method == CardInteractionMethod.swipe;
+    final failed = state == CardPresentationVisualState.contactlessFailed;
+    final reading = state == CardPresentationVisualState.reading;
+    final remove = state == CardPresentationVisualState.removeCard;
+
+    return Semantics(
+      label: 'Payment terminal reader. ${state.name}. ${method.wire}.',
+      child: Container(
+        height: 430,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: AppColors.hpSurfaceMuted,
+          border: Border.all(color: AppColors.hpBorder),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: LayoutBuilder(builder: (context, constraints) {
+          final compact = constraints.maxWidth < 620;
+          final terminalWidth = compact ? 190.0 : 230.0;
+          final cardWidth = compact ? 190.0 : 245.0;
+          final cardLeft = isSwipe
+              ? (reading
+                  ? constraints.maxWidth * .52
+                  : constraints.maxWidth * .05)
+              : isInsert
+                  ? (constraints.maxWidth - cardWidth) / 2
+                  : compact
+                      ? constraints.maxWidth - cardWidth - 10
+                      : constraints.maxWidth * .58;
+          final cardTop = remove
+              ? 20.0
+              : isInsert
+                  ? (reading ? 285.0 : 330.0)
+                  : isSwipe
+                      ? 120.0
+                      : (reading ? 80.0 : 45.0);
+          return Stack(clipBehavior: Clip.none, children: [
+            Align(
+              alignment: compact
+                  ? const Alignment(-.65, -.05)
+                  : const Alignment(-.45, -.05),
+              child: _PhysicalTerminal(
+                width: terminalWidth,
+                failed: failed,
+                reading: reading,
+                method: method,
+              ),
+            ),
+            AnimatedPositioned(
+              duration: duration,
+              curve: Curves.easeInOutCubic,
+              left: cardLeft,
+              top: cardTop,
+              width: cardWidth,
+              child: Transform.rotate(
+                angle: isInsert
+                    ? -.04
+                    : isSwipe
+                        ? .08
+                        : -.08,
+                child: PaymentCardVisual(card: card, selected: true),
+              ),
+            ),
+            Positioned(
+              right: 18,
+              bottom: 16,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: failed
+                      ? AppColors.hpDeclined.withValues(alpha: .1)
+                      : AppColors.hpSurface,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                      color:
+                          failed ? AppColors.hpDeclined : AppColors.hpBorder),
+                ),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(
+                    failed
+                        ? Icons.portable_wifi_off_rounded
+                        : isInsert
+                            ? Icons.arrow_upward_rounded
+                            : isSwipe
+                                ? Icons.swipe_rounded
+                                : Icons.contactless_rounded,
+                    color: failed ? AppColors.hpDeclined : AppColors.hpOrange,
+                  ),
+                  const SizedBox(width: 7),
+                  Text(
+                    failed
+                        ? 'Contactless failed'
+                        : reading
+                            ? 'Reading card'
+                            : remove
+                                ? 'Remove card'
+                                : method.wire,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ]),
+              ),
+            ),
+          ]);
+        }),
+      ),
+    );
+  }
+}
+
+class _PhysicalTerminal extends StatelessWidget {
+  const _PhysicalTerminal({
+    required this.width,
+    required this.failed,
+    required this.reading,
+    required this.method,
+  });
+  final double width;
+  final bool failed, reading;
+  final CardInteractionMethod method;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: width,
+        height: 330,
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: AppColors.hpText,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: const [
+            BoxShadow(
+                color: Color(0x33000000), blurRadius: 20, offset: Offset(0, 12))
+          ],
+        ),
+        child: Column(children: [
+          Container(
+            height: 112,
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.hpSurface,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child:
+                Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Icon(
+                failed
+                    ? Icons.error_outline_rounded
+                    : reading
+                        ? Icons.sync_rounded
+                        : method == CardInteractionMethod.contactless
+                            ? Icons.contactless_rounded
+                            : Icons.credit_card_rounded,
+                color: failed ? AppColors.hpDeclined : AppColors.hpGreen,
+                size: 34,
+              ),
+              const SizedBox(height: 7),
+              Text(
+                  failed
+                      ? 'TRY CHIP'
+                      : reading
+                          ? 'READING…'
+                          : 'PRESENT CARD',
+                  style: TextStyle(
+                    color: failed ? AppColors.hpDeclined : AppColors.hpText,
+                    fontWeight: FontWeight.w900,
+                  )),
+            ]),
+          ),
+          const SizedBox(height: 18),
+          Expanded(
+            child: GridView.count(
+              crossAxisCount: 3,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              children: List.generate(
+                9,
+                (index) => DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: index == 8
+                        ? AppColors.hpGreen
+                        : AppColors.hpSurface.withValues(alpha: .16),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: Text('${index + 1}',
+                        style: const TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Container(
+            height: 9,
+            width: width * .62,
+            decoration: BoxDecoration(
+              color: AppColors.hpBorder,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ]),
       );
 }
 

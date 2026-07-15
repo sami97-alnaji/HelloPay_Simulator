@@ -42,6 +42,11 @@ class _HelloPaySimulatorAppState extends State<HelloPaySimulatorApp> {
       GoRoute(
           path: '/developer-docs',
           builder: (_, __) => const DeveloperDocsScreen()),
+      GoRoute(
+          path: '/developer-preview/:kind',
+          builder: (_, state) => DeveloperResultPreviewScreen(
+              key: ValueKey(state.pathParameters['kind']),
+              kind: state.pathParameters['kind']!)),
     ],
   );
 

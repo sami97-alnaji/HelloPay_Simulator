@@ -44,7 +44,8 @@ flutter run -d chrome
 ```
 
 Any Flutter-supported target generated for the project can use the same app
-shell. Chrome is the verified Phase 4 runtime target.
+shell. Chrome and an Android 15 API 35 emulator are verified Phase 4 runtime
+targets, including a complete approved-payment flow on the emulator.
 
 ## Test and validate
 
@@ -65,16 +66,26 @@ sizes.
 
 Runtime captures are stored in [`docs/screenshots/`](docs/screenshots/):
 
+- `splash.png`
 - `standby.png`
+- `pairing.png`
 - `payment-entry.png`
 - `test-cards.png`
-- `card-presentation.png`
-- `pin-entry.png`
+- `contactless-presentation.png`
+- `insert-presentation.png`
+- `pin.png`
 - `processing.png`
 - `approved-result.png`
 - `declined-result.png`
-- `scenario-studio.png`
+- `cancelled-result.png`
+- `timeout-recovery-result.png`
+- `refund-result.png`
+- `void-result.png`
 - `receipt.png`
+- `scenario-studio.png`
+- `transaction-history.png`
+- `settings.png`
+- `developer-documentation.png`
 
 ## Simulator-specific behavior
 

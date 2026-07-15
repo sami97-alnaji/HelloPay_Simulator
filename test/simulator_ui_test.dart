@@ -298,4 +298,38 @@ void main() {
         home: Scaffold(body: ReceiptPaper(transaction: updatedSale))));
     expect(find.textContaining('Refunded: 250 HUF'), findsOneWidget);
   });
+
+  test('HUF money formatting uses grouped Hungarian presentation', () {
+    expect(money(12500), '12 500 HUF');
+    expect(money(12500.5), '12 500,50 HUF');
+    expect(money(-1000), '-1 000 HUF');
+  });
+
+  testWidgets('contactless fallback exposes the chip recovery state',
+      (tester) async {
+    final controller = SimulatorController();
+    controller.selectCard(
+        DemoCards.all.firstWhere((card) => card.id == 'contactless-fallback'));
+    controller.preparePayment(request());
+    await tester
+        .pumpWidget(testApp(const CardPresentationScreen(), controller));
+    expect(find.text('Tap card'), findsWidgets);
+    await tester.tap(find.text('Tap card').last);
+    await tester.pump();
+    expect(find.text('Contactless failed'), findsOneWidget);
+    expect(find.text('Use chip instead'), findsWidgets);
+  });
+
+  testWidgets('terminal reader remains bounded on a phone viewport',
+      (tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final controller = SimulatorController()..preparePayment(request());
+    await tester
+        .pumpWidget(testApp(const CardPresentationScreen(), controller));
+    expect(find.byType(TerminalReaderScene), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

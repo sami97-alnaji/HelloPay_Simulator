@@ -105,9 +105,9 @@ class SimulatorController extends ChangeNotifier {
   Duration get processingDelay {
     final speedDelay = switch (speed) {
       SimulatorSpeed.instant => Duration.zero,
-      SimulatorSpeed.fast => const Duration(milliseconds: 250),
-      SimulatorSpeed.realistic => const Duration(milliseconds: 650),
-      SimulatorSpeed.slowTraining => const Duration(milliseconds: 1100),
+      SimulatorSpeed.fast => const Duration(milliseconds: 900),
+      SimulatorSpeed.realistic => const Duration(milliseconds: 1600),
+      SimulatorSpeed.slowTraining => const Duration(milliseconds: 2600),
     };
     return selectedScenario.delay > speedDelay
         ? selectedScenario.delay
