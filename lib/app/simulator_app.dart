@@ -34,6 +34,9 @@ class _HelloPaySimulatorAppState extends State<HelloPaySimulatorApp> {
           path: '/scenarios', builder: (_, __) => const ScenarioStudioScreen()),
       GoRoute(path: '/history', builder: (_, __) => const HistoryScreen()),
       GoRoute(
+          path: '/settlement',
+          builder: (_, __) => const SettlementReportScreen()),
+      GoRoute(
         path: '/history/:transactionId',
         builder: (_, state) => TransactionDetailScreen(
           transactionId: state.pathParameters['transactionId']!,

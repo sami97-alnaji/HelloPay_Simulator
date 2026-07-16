@@ -128,6 +128,20 @@ void main() {
     expect(controller.submitPin(), isTrue);
   });
 
+  test('PIN blocked scenario overrides the selected card behavior', () {
+    final controller = SimulatorController();
+    controller.selectCard(
+        DemoCards.all.firstWhere((card) => card.id == 'mastercard-pin'));
+    controller.selectScenario(ScenarioPresets.all
+        .firstWhere((scenario) => scenario.id == 'pin-blocked'));
+    controller.preparePayment(request());
+    for (final digit in '1234'.split('')) {
+      controller.appendPin(digit);
+    }
+    expect(controller.effectivePinBehavior, PinBehavior.blocked);
+    expect(controller.submitPin(), isFalse);
+  });
+
   test('payment executes only once', () async {
     final controller = SimulatorController()..speed = SimulatorSpeed.instant;
     controller.preparePayment(request());
@@ -282,6 +296,69 @@ void main() {
         home: Scaffold(
             body: TransactionResultView(transaction: voidTransaction))));
     expect(find.text('Void successful'), findsOneWidget);
+  });
+
+  test('controller exposes refund, void mismatch and settlement UI operations',
+      () {
+    final refundController = SimulatorController();
+    final refundableSale =
+        refundController.engine.processPayment(request()).value!;
+    refundController.refundTransaction(refundableSale);
+    expect(refundController.resultType, TransactionType.refund);
+    expect(refundController.resultTransaction?.type, TransactionType.refund);
+
+    final voidController = SimulatorController();
+    final voidSale = voidController.engine.processPayment(request()).value!;
+    voidController.voidTransaction(voidSale, mismatchedId: true);
+    expect(voidController.resultType, TransactionType.voidTransaction);
+    expect(voidController.resultTransaction, isNull);
+    expect(voidController.resultError?.code, 2004);
+
+    voidController.voidTransaction(voidSale);
+    expect(voidController.resultTransaction?.type,
+        TransactionType.voidTransaction);
+    voidController.closeBatch();
+    expect(voidController.settlementReport?.paymentCount, 1);
+    expect(voidController.settlementReport?.voidCount, 1);
+  });
+
+  testWidgets('transaction detail exposes Android financial actions',
+      (tester) async {
+    final controller = SimulatorController();
+    final sale = controller.engine.processPayment(request()).value!;
+    await tester.pumpWidget(testApp(
+        TransactionDetailScreen(transactionId: sale.transactionId),
+        controller));
+    expect(find.text('Refund remaining amount'), findsOneWidget);
+    expect(find.text('Void this transaction'), findsOneWidget);
+    expect(find.text('Test void ID mismatch'), findsOneWidget);
+  });
+
+  testWidgets('failed refund retains refund-specific result wording',
+      (tester) async {
+    final controller = SimulatorController();
+    final sale = controller.engine.processPayment(request()).value!;
+    controller.selectScenario(ScenarioPresets.all
+        .firstWhere((scenario) => scenario.id == 'refund-failed'));
+    controller.refundTransaction(sale);
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: TransactionResultView(
+                error: controller.resultError,
+                expectedType: controller.resultType))));
+    expect(find.text('Refund failed'), findsOneWidget);
+    expect(find.text('The request could not be completed.'), findsOneWidget);
+  });
+
+  testWidgets('settlement report renders shared-engine totals', (tester) async {
+    final controller = SimulatorController();
+    controller.engine.processPayment(request());
+    controller.closeBatch();
+    await tester
+        .pumpWidget(testApp(const SettlementReportScreen(), controller));
+    expect(find.text('Batch closed successfully'), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
+    expect(find.text('1 000 HUF'), findsWidgets);
   });
 
   testWidgets('receipt includes refunded amount when relevant', (tester) async {

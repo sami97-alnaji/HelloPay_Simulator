@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../domain/enums.dart';
 import '../domain/models.dart';
+import '../domain/simulator_error.dart';
 import '../theme/app_theme.dart';
 
 String money(num value, [String currency = 'HUF']) {
@@ -742,9 +743,11 @@ class ProcessingStepView extends StatelessWidget {
 }
 
 class TransactionResultView extends StatelessWidget {
-  const TransactionResultView({super.key, this.transaction, this.error});
+  const TransactionResultView(
+      {super.key, this.transaction, this.error, this.expectedType});
   final Transaction? transaction;
-  final Object? error;
+  final SimulatorError? error;
+  final TransactionType? expectedType;
   @override
   Widget build(BuildContext context) {
     final approved = transaction?.isSuccessful == true;
@@ -765,7 +768,7 @@ class TransactionResultView extends StatelessWidget {
             ? 'Customer cancelled'
             : timeout
                 ? 'Request timed out'
-                : switch (transaction?.type) {
+                : switch (transaction?.type ?? expectedType) {
                     TransactionType.refund => 'Refund failed',
                     TransactionType.voidTransaction => 'Void failed',
                     _ => 'Payment declined',
@@ -802,6 +805,9 @@ class TransactionResultView extends StatelessWidget {
                   transaction!.errorMessage ??
                       'Transaction ${transaction!.transactionId}',
                   textAlign: TextAlign.center)
+            ] else if (error != null) ...[
+              const SizedBox(height: 8),
+              Text(error!.userMessage, textAlign: TextAlign.center)
             ]
           ]),
         ));

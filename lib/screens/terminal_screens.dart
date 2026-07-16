@@ -888,11 +888,18 @@ class _PinScreenState extends ConsumerState<PinScreen> {
                           if (accepted) {
                             context.go('/processing');
                           } else {
-                            setState(() => feedback =
-                                c.selectedCard.pinBehavior ==
-                                        PinBehavior.blocked
-                                    ? 'PIN blocked'
-                                    : 'Incorrect PIN. Try again.');
+                            final blocked =
+                                c.effectivePinBehavior == PinBehavior.blocked;
+                            setState(() => feedback = blocked
+                                ? 'PIN blocked'
+                                : 'Incorrect PIN. Try again.');
+                            if (blocked) {
+                              Future<void>.delayed(
+                                      const Duration(milliseconds: 600))
+                                  .then((_) {
+                                if (context.mounted) context.go('/processing');
+                              });
+                            }
                           }
                         }),
                     const SizedBox(height: 12),
@@ -1005,7 +1012,9 @@ class ResultScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       TransactionResultView(
-                          transaction: tx, error: c.resultError),
+                          transaction: tx,
+                          error: c.resultError,
+                          expectedType: c.resultType),
                       const SizedBox(height: 16),
                       if (tx?.isSuccessful == true) ...[
                         TerminalPanel(
@@ -1486,7 +1495,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                     onTap: () => context.push('/history/${tx.transactionId}'))),
             const SizedBox(height: 10)
           ],
-          if (c.engine.transactionHistory.isNotEmpty)
+          if (c.engine.transactionHistory.isNotEmpty) ...[
             SecondaryTerminalButton(
                 label: 'Clear history',
                 icon: Icons.delete_outline,
@@ -1496,6 +1505,15 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                     'This removes all simulator history records.',
                     () =>
                         ref.read(simulatorControllerProvider).clearHistory())),
+            const SizedBox(height: 10),
+            PrimaryTerminalButton(
+                label: 'Close Batch',
+                icon: Icons.summarize_outlined,
+                onPressed: () {
+                  ref.read(simulatorControllerProvider).closeBatch();
+                  context.push('/settlement');
+                }),
+          ],
         ]));
   }
 }
@@ -1544,6 +1562,35 @@ class TransactionDetailScreen extends ConsumerWidget {
                               context.push('/receipt');
                             }),
                       const SizedBox(height: 10),
+                      if (t.isRefundable) ...[
+                        PrimaryTerminalButton(
+                            label: 'Refund remaining amount',
+                            icon: Icons.currency_exchange,
+                            onPressed: () {
+                              c.refundTransaction(t);
+                              context.go('/result');
+                            }),
+                        const SizedBox(height: 10),
+                      ],
+                      if (t.isSuccessful &&
+                          t.type == TransactionType.payment) ...[
+                        SecondaryTerminalButton(
+                            label: 'Void this transaction',
+                            icon: Icons.block,
+                            onPressed: () {
+                              c.voidTransaction(t);
+                              context.go('/result');
+                            }),
+                        const SizedBox(height: 10),
+                        SecondaryTerminalButton(
+                            label: 'Test void ID mismatch',
+                            icon: Icons.rule,
+                            onPressed: () {
+                              c.voidTransaction(t, mismatchedId: true);
+                              context.go('/result');
+                            }),
+                        const SizedBox(height: 10),
+                      ],
                       SecondaryTerminalButton(
                           label: 'Repeat test setup',
                           icon: Icons.replay,
@@ -1562,6 +1609,56 @@ class TransactionDetailScreen extends ConsumerWidget {
                           requestJson: prettyJson({'requestId': t.requestId}),
                           responseJson: prettyJson(t.toJson()),
                           transaction: t)
+                    ]))));
+  }
+}
+
+class SettlementReportScreen extends ConsumerWidget {
+  const SettlementReportScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final controller = ref.watch(simulatorControllerProvider);
+    final report = controller.settlementReport;
+    if (report == null) return const NotFoundScreen(path: '/settlement');
+    return TerminalPageScaffold(
+        title: 'Settlement report',
+        subtitle: 'Close Batch result from the shared simulator engine',
+        status: controller.engine.runtimeState.status,
+        child: Center(
+            child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 720),
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TerminalPanel(
+                          child: Column(children: [
+                        const Icon(Icons.task_alt,
+                            size: 58, color: AppColors.hpSuccess),
+                        const SizedBox(height: 10),
+                        const Text('Batch closed successfully',
+                            style: TextStyle(
+                                fontSize: 24, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 18),
+                        _DataRow('Report ID', report.reportId),
+                        _DataRow('Payments', report.paymentCount.toString()),
+                        _DataRow('Refunds', report.refundCount.toString()),
+                        _DataRow('Voids', report.voidCount.toString()),
+                        _DataRow('Gross', money(report.grossAmount)),
+                        _DataRow('Refund amount', money(report.refundAmount)),
+                        _DataRow('Net amount', money(report.netAmount)),
+                        _DataRow(
+                            'Opened', report.openedAt.toLocal().toString()),
+                        _DataRow(
+                            'Closed', report.closedAt.toLocal().toString()),
+                        if (report.helloPayReceipt != null)
+                          _DataRow('Receipt', report.helloPayReceipt!),
+                      ])),
+                      const SizedBox(height: 14),
+                      PrimaryTerminalButton(
+                          label: 'Return to terminal',
+                          icon: Icons.home_outlined,
+                          onPressed: () => context.go('/home')),
                     ]))));
   }
 }

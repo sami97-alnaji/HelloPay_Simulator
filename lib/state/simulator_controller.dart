@@ -24,6 +24,9 @@ class SimulatorController extends ChangeNotifier {
   PaymentRequest? pendingRequest;
   Transaction? resultTransaction;
   SimulatorError? resultError;
+  TransactionType resultType = TransactionType.payment;
+  SettlementReport? settlementReport;
+  Json? _operationRequest;
   TipMode tipMode = TipMode.omitted;
   bool processing = false;
   bool developerDetailsEnabled = false;
@@ -63,13 +66,62 @@ class SimulatorController extends ChangeNotifier {
 
   void preparePayment(PaymentRequest request) {
     pendingRequest = request;
+    _operationRequest = request.toJson();
     resultTransaction = null;
     resultError = null;
+    resultType = TransactionType.payment;
     pin = '';
     pinAttempts = 0;
     _executed = false;
     notifyListeners();
   }
+
+  void refundTransaction(Transaction original) {
+    final originalUserCode = original.userCode?.trim();
+    final request = RefundRequest(
+      requestId: _operationId('REFUND'),
+      amount: original.remainingRefundableAmount,
+      paymentMethod: original.paymentMethod,
+      userCode: originalUserCode == null || originalUserCode.isEmpty
+          ? 'demo-user'
+          : originalUserCode,
+      remoteIdentity: original.remoteIdentity,
+      originalTransactionId: original.transactionId,
+    );
+    _operationRequest = request.toJson();
+    resultType = TransactionType.refund;
+    final result = engine.processRefund(request);
+    resultTransaction = result.value;
+    resultError = result.error;
+    notifyListeners();
+  }
+
+  void voidTransaction(Transaction original, {bool mismatchedId = false}) {
+    final originalUserCode = original.userCode?.trim();
+    final request = VoidRequest(
+      requestId: _operationId('VOID'),
+      lastTransactionId: mismatchedId
+          ? '${original.transactionId}-MISMATCH'
+          : original.transactionId,
+      userCode: originalUserCode == null || originalUserCode.isEmpty
+          ? 'demo-user'
+          : originalUserCode,
+    );
+    _operationRequest = request.toJson();
+    resultType = TransactionType.voidTransaction;
+    final result = engine.voidLastTransaction(request);
+    resultTransaction = result.value;
+    resultError = result.error;
+    notifyListeners();
+  }
+
+  void closeBatch() {
+    settlementReport = engine.closeBatch();
+    notifyListeners();
+  }
+
+  String _operationId(String prefix) =>
+      '$prefix-${DateTime.now().microsecondsSinceEpoch}';
 
   void appendPin(String digit) {
     if (pin.length < 6) {
@@ -86,9 +138,7 @@ class SimulatorController extends ChangeNotifier {
   }
 
   bool submitPin() {
-    final behavior = selectedScenario.requiresPin
-        ? selectedScenario.pinBehavior
-        : selectedCard.pinBehavior;
+    final behavior = effectivePinBehavior;
     pinAttempts++;
     final accepted = switch (behavior) {
       PinBehavior.notRequired ||
@@ -101,6 +151,10 @@ class SimulatorController extends ChangeNotifier {
     notifyListeners();
     return accepted;
   }
+
+  PinBehavior get effectivePinBehavior => selectedScenario.requiresPin
+      ? selectedScenario.pinBehavior
+      : selectedCard.pinBehavior;
 
   Duration get processingDelay {
     final speedDelay = switch (speed) {
@@ -192,6 +246,9 @@ class SimulatorController extends ChangeNotifier {
     pendingRequest = null;
     resultTransaction = null;
     resultError = null;
+    resultType = TransactionType.payment;
+    settlementReport = null;
+    _operationRequest = null;
     tipMode = TipMode.omitted;
     processing = false;
     pin = '';
@@ -200,8 +257,10 @@ class SimulatorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  String requestJson() => const JsonEncoder.withIndent('  ')
-      .convert(pendingRequest?.toJson() ?? const <String, Object?>{});
+  String requestJson() =>
+      const JsonEncoder.withIndent('  ').convert(_operationRequest ??
+          pendingRequest?.toJson() ??
+          const <String, Object?>{});
 
   String responseJson() =>
       const JsonEncoder.withIndent('  ').convert(resultTransaction?.toJson() ??
