@@ -117,6 +117,35 @@ start the server. The defaults are:
 Keep the server on a private development network. It is plain local HTTP and
 must never be exposed to the public internet.
 
+### Starting the local server
+
+The local API does **not** start when the application launches. Start it
+manually for each new app session:
+
+1. Launch HelloPay Simulator and wait for the terminal to show **READY**.
+2. Open **Terminal Settings** and enable **Local API simulator**, or open
+   **Local API Monitor** and select **Start API**.
+3. Confirm the running status: the monitor changes to `Listening on
+   http://<address>:<port>` and **Start API** becomes **Stop API**. In Terminal
+   Settings, the switch remains enabled and shows the HTTP and UDP ports.
+
+Starting the local API simulator starts both the HTTP API and UDP discovery;
+they are stopped together with **Stop API** or by disabling the settings
+switch. A fully closed app stops both services, so repeat these steps after
+opening the app again. The app was validated through an Android background and
+resume cycle, but operating-system background behaviour is not guaranteed;
+keep the simulator open while running an integration test.
+
+The UI shows the server's bind address, which is commonly `0.0.0.0`. For a
+separate POS on the same Wi-Fi network, use the Android or Windows device's
+actual LAN address from its network settings, for example:
+
+```text
+http://192.168.1.50:8443/api/v1
+```
+
+Automatic server startup is not currently available.
+
 ### Pair a demo POS
 
 First request an OTP, then create a session. Replace the placeholders with the
