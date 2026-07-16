@@ -1,59 +1,171 @@
 # HelloPay Simulator
 
-HelloPay Simulator is a Flutter development and demo terminal for exercising
-pairing, payment, PIN, receipt, recovery, refund, and void flows without
-processing real money. Its phone and tablet UI uses the same shared
-`SimulatorEngine` as the domain tests, so widgets do not reimplement payment
-rules.
+<p align="center">
+  <img src="docs/screenshots/standby.png" alt="HelloPay Simulator standby terminal" width="260">
+  <img src="docs/screenshots/approved-result.png" alt="HelloPay Simulator approved payment result" width="260">
+</p>
 
-> **Simulator only:** this application does not process real money, store real
-> card details, or provide a legally/fiscally valid receipt.
+<p align="center">
+  A Flutter payment-terminal simulator for demos, integration tests, and UI development.
+</p>
 
-## Current status
+<p align="center">
+  <a href="https://github.com/sami97-alnaji/HelloPay_Simulator/releases/tag/v0.1.1-simulator">Download v0.1.1 APK</a>
+  &nbsp;|&nbsp;
+  <a href="#quick-start">Quick start</a>
+  &nbsp;|&nbsp;
+  <a href="#local-api">Local API</a>
+  &nbsp;|&nbsp;
+  <a href="LICENSE">MIT License</a>
+</p>
 
-Phases 4 and 5 are implemented: the complete visual demo flow, reusable terminal
-components, Riverpod state, routing, responsive layouts, accessibility
-semantics, in-app developer documentation, and transaction history are
-available together with a native local HTTP API, UDP discovery, session checks,
-idempotency, concurrency protection, and a sanitized API monitor.
+> **Development and testing only.** HelloPay Simulator does not process real
+> money, store real card details, or produce legally/fiscally valid receipts.
+> It is not a production payment terminal, a production HelloPay protocol, or
+> a certification tool.
 
-## Supported visual flows
+## What you can test
 
-- Splash and responsive standby terminal
-- OTP generation, one-time validation, pairing success, and session expiry
-- Amount, nullable tip, service charge, payment method, and request metadata
-- Twelve fictional masked test cards with search and filters
-- Tap, insert, swipe, PIN, processing, approved, declined, cancelled, and
-  timeout recovery flows
-- Demo receipt preview and copy actions
-- Scenario Studio with preset state-transition preview and custom JSON checks
-- Auditable transaction history and detail views
-- Terminal, tipping, pairing/session, simulator, and data settings
-- Searchable developer reference
+- A responsive terminal experience for phone, tablet, desktop, and web
+- One-time OTP pairing and expiring POS sessions
+- Payment amounts, tips, service charges, methods, and request metadata
+- Twelve fictional, masked test cards with tap, insert, swipe, PIN, and
+  signature behaviours
+- Approved, declined, cancelled, timeout, busy, recovery, and PIN-blocked
+  paths through **Scenario Studio**
+- Refunds, voids, close-batch settlement, transaction history, and receipt
+  previews
+- A native local HTTP API, UDP discovery, request idempotency, and a sanitized
+  in-app API monitor
 
-## Test cards
+All payment rules are executed by the shared `SimulatorEngine`, which is also
+covered by the automated test suite. The UI is therefore a view of the same
+simulator behaviour that integrations exercise.
 
-The app includes 12 fictional cards. They contain masked display values only;
-no valid complete PAN is supported. Cards select expected interaction, PIN,
-signature, payment method, and simulator result behavior.
+## Quick start
 
-## Run
+### Prerequisites
+
+- Flutter SDK compatible with Dart `^3.5.3`
+- An Android emulator/device, Windows desktop, or a supported Flutter target
+
+### Run from source
 
 ```powershell
 flutter pub get
-flutter run -d chrome
-flutter run -d windows
 flutter run -d emulator-5554
 ```
 
-Any Flutter-supported target generated for the project can use the same app
-shell. Chrome and an Android 15 API 35 emulator are verified Phase 4 runtime
-targets, including a complete approved-payment flow on the emulator.
+Other useful targets:
 
-Native Android and Windows builds can host the local API. Web builds provide
-the visual simulator but intentionally disable local socket hosting.
+```powershell
+flutter run -d windows
+flutter run -d chrome
+```
 
-## Test and validate
+The web build provides the visual simulator. The local HTTP server and UDP
+discovery require a native Android or Windows build because browsers cannot
+bind local sockets.
+
+### Install the release APK
+
+Download [`app-release.apk`](https://github.com/sami97-alnaji/HelloPay_Simulator/releases/download/v0.1.1-simulator/app-release.apk)
+from the [v0.1.1 release](https://github.com/sami97-alnaji/HelloPay_Simulator/releases/tag/v0.1.1-simulator).
+
+Verify the downloaded file before installing it:
+
+```powershell
+Get-FileHash .\app-release.apk -Algorithm SHA256
+```
+
+Expected SHA-256:
+
+```text
+4b251223160baf76273b91390e8cc4abfdf9b7571629e690ccffa130a4312792
+```
+
+## Using the simulator
+
+1. Launch the app and wait for the terminal to show **READY**.
+2. For a UI demo, open the payment flow, enter an amount, choose a fictional
+   card, and follow the on-screen tap, insert, swipe, PIN, or signature prompt.
+3. Choose a preset in **Scenario Studio** to model outcomes such as a decline,
+   cancellation, terminal busy state, timeout, or recovery. Use the custom
+   scenario only for controlled test responses.
+4. Open **Transaction History** to inspect the transaction ID, receipt preview,
+   and linked refund or void operations.
+5. Use the detail screen to refund the remaining amount or void the latest
+   eligible sale. Choose **Close Batch** to produce a simulated settlement
+   report.
+6. Use **Reset Simulator** in settings when you need a clean in-memory state.
+
+The supplied cards are deliberately fictional and masked. No valid complete
+PAN or real PIN is accepted or stored. See [the test-card guide](docs/test-cards.md)
+and [scenario guide](docs/scenarios.md) for the available behaviours.
+
+## Local API
+
+On Android or Windows, open **Terminal settings** or **Local API Monitor** and
+start the server. The defaults are:
+
+| Service | Default |
+| --- | --- |
+| HTTP API | `http://0.0.0.0:8443` |
+| UDP discovery | Port `38383` |
+| API version | `v1` |
+
+Keep the server on a private development network. It is plain local HTTP and
+must never be exposed to the public internet.
+
+### Pair a demo POS
+
+First request an OTP, then create a session. Replace the placeholders with the
+values returned by the prior response:
+
+```powershell
+curl.exe -X POST http://127.0.0.1:8443/api/v1/execute/otpHandshake `
+  -H "Content-Type: application/json" `
+  -d '{"requestId":"OTP-1"}'
+
+curl.exe -X POST http://127.0.0.1:8443/api/v1/pair `
+  -H "Content-Type: application/json" `
+  -d '{"requestId":"PAIR-1","token":"<OTP>","posId":"demo-pos","posName":"Demo POS"}'
+```
+
+Use the returned `session.sessionId` in every financial request:
+
+```powershell
+curl.exe -X POST http://127.0.0.1:8443/api/v1/execute/payment `
+  -H "Content-Type: application/json" `
+  -d '{"requestId":"PAY-1","sessionId":"<SESSION_ID>","payload":{"base":12500,"service":0,"paymentMethod":"BANK","userCode":"demo"}}'
+```
+
+Responses use a standard envelope with `requestId`, `errorCode`,
+`errorMessage`, and a UTC `timestamp`. Repeating a financial request with the
+same `requestId` returns the cached response instead of creating another
+transaction. The API monitor retains up to 200 redacted exchanges; tokens,
+PIN-like fields, and secrets are hidden before display or copy.
+
+For the full route contract, aliases, response examples, error handling, and
+UDP discovery packet, read [the local API guide](docs/local-api.md) and
+[API reference](docs/api-reference.md).
+
+## Documentation
+
+| Topic | Where to start |
+| --- | --- |
+| End-user walkthrough | [User guide](docs/user-guide.md) |
+| Local HTTP and UDP integration | [Local API](docs/local-api.md) · [Integration guide](docs/integration-guide.md) |
+| Architecture and developer notes | [Architecture](docs/architecture.md) · [Developer guide](docs/developer-guide.md) |
+| Error behaviour | [Error codes](docs/error-codes.md) |
+| Test coverage and release evidence | [Testing](docs/testing.md) · [Release checklist](docs/release-checklist.md) |
+| Simulator boundaries | [Known limitations](docs/known-limitations.md) |
+
+More than twenty runtime captures, including pairing, payment, processing,
+receipts, Scenario Studio, settings, and history, are available in
+[`docs/screenshots/`](docs/screenshots/).
+
+## Validate changes
 
 ```powershell
 dart format .
@@ -62,40 +174,18 @@ flutter test
 git diff --check
 ```
 
-The engine suite groups the complete Phase 3 behavior matrix into focused
-tests. The Phase 4 suite adds controller and widget coverage for splash,
-standby, pairing, tip transmission modes, card/PIN routing, exact-once
-execution, results, receipt, history, reset, and the required phone/tablet
-sizes.
+The v0.1.1 Android release was built, installed, and exercised on an Android
+15 / API 35 emulator. The release validation included payment, pairing, refund,
+void, close-batch, local HTTP, UDP discovery, responsive layouts, and recovery
+flows. See the [release checklist](docs/release-checklist.md) for the recorded
+scope.
 
-## Screenshots
+## Contributing
 
-Runtime captures are stored in [`docs/screenshots/`](docs/screenshots/):
+Issues and pull requests are welcome. Keep changes simulator-only: do not add
+real payment credentials, real card data, or production terminal claims. Run
+the validation commands above before opening a pull request.
 
-- `splash.png`
-- `standby.png`
-- `pairing.png`
-- `payment-entry.png`
-- `test-cards.png`
-- `contactless-presentation.png`
-- `insert-presentation.png`
-- `pin.png`
-- `processing.png`
-- `approved-result.png`
-- `declined-result.png`
-- `cancelled-result.png`
-- `timeout-recovery-result.png`
-- `refund-result.png`
-- `void-result.png`
-- `receipt.png`
-- `scenario-studio.png`
-- `transaction-history.png`
-- `settings.png`
-- `developer-documentation.png`
+## License
 
-## Simulator-specific behavior
-
-Refunds may link to an original simulator transaction ID to test remaining
-refundable balances. This is simulator-specific behavior, not a claim about a
-production HelloPay protocol. The local endpoint contract is documented in
-[`docs/local-api.md`](docs/local-api.md).
+Copyright © 2026 sami97-alnaji. Licensed under the [MIT License](LICENSE).
